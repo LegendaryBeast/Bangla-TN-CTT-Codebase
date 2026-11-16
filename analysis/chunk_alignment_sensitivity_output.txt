@@ -1,0 +1,96 @@
+== A. chunking of comments (160-byte budget unless stated)
+  budget 160:  15.3% of comments cut, holding  43.4% of words
+  budget 320:   5.3% of comments cut, holding  23.8% of words
+  budget 480:   2.3% of comments cut, holding  13.9% of words
+  budget 640:   1.1% of comments cut, holding   8.7% of words
+  test comments (three splits): 572 multi-chunk, 3214 single-chunk; 254 not token-aligned, 3532 aligned
+
+== B. single-chunk vs multi-chunk comments: CER (%), three splits pooled, one run each
+  word_crf      single-chunk  5.31   multi-chunk  3.39
+  re-encoding   single-chunk  4.85   multi-chunk  2.92
+  context-only  single-chunk  4.38   multi-chunk  2.96
+  CTT           single-chunk  4.47   multi-chunk  2.83
+  single-chunk: CTT vs word_crf (3 splits)                       d -0.84  95% CI [-1.26, -0.38]  p = 0.0001
+  single-chunk: CTT vs re-encoding (3 splits)                    d -0.39  95% CI [-0.80, +0.03]  p = 0.0617
+  single-chunk: CTT vs matched word (split 42, 3 runs)           d -0.69  95% CI [-1.18, -0.21]  p = 0.0051
+  multi-chunk: CTT vs word_crf (3 splits)                        d -0.56  95% CI [-0.84, -0.32]  p = 0.0001
+  multi-chunk: CTT vs re-encoding (3 splits)                     d -0.09  95% CI [-0.25, +0.09]  p = 0.3325
+  multi-chunk: CTT vs matched word (split 42, 3 runs)            d -0.13  95% CI [-0.30, +0.02]  p = 0.1077
+
+== D. token-aligned vs not token-aligned comments: CER (%), three splits pooled, one run each
+  word_crf      aligned  3.81   not aligned  8.53
+  re-encoding   aligned  3.61   not aligned  6.40
+  context-only  aligned  3.32   not aligned  6.43
+  CTT           aligned  3.37   not aligned  6.02
+  aligned: CTT vs word_crf (3 splits)                            d -0.44  95% CI [-0.71, -0.14]  p = 0.0005
+  aligned: CTT vs re-encoding (3 splits)                         d -0.23  95% CI [-0.48, +0.03]  p = 0.0909
+  aligned: CTT vs matched word (split 42, 3 runs)                d -0.40  95% CI [-0.71, -0.06]  p = 0.0093
+  not aligned: CTT vs word_crf (3 splits)                        d -2.51  95% CI [-3.35, -1.79]  p = 0.0001
+  not aligned: CTT vs re-encoding (3 splits)                     d -0.37  95% CI [-0.74, -0.03]  p = 0.0489
+  not aligned: CTT vs matched word (split 42, 3 runs)            d -0.65  95% CI [-1.11, -0.24]  p = 0.0049
+
+== C. token accuracy by position relative to chunk boundaries (token-aligned test comments, no guard)
+                    word_crf  re-encoding  context-only    CTT  tokens  share %  CTT - word_crf  CTT - re-encoding
+position                                                                                                          
+boundary               97.22        97.76         97.38  97.54    1832     5.76            0.33              -0.22
+inside multi-chunk     94.48        95.05         95.03  95.19   11373    35.77            0.71               0.14
+single chunk           89.77        90.73         91.05  91.21   18586    58.46            1.44               0.48
+  token accuracy boundary: CTT vs word_crf                       d +0.33  95% CI [-0.18, +0.82]  p = 0.3125
+  token accuracy boundary: CTT vs re-encoding                    d -0.22  95% CI [-0.67, +0.21]  p = 0.4868
+  token accuracy inside multi-chunk: CTT vs word_crf             d +0.71  95% CI [+0.38, +1.07]  p = 0.0001
+  token accuracy inside multi-chunk: CTT vs re-encoding          d +0.14  95% CI [-0.15, +0.41]  p = 0.3608
+  token accuracy single chunk: CTT vs word_crf                   d +1.44  95% CI [+1.06, +1.83]  p = 0.0001
+  token accuracy single chunk: CTT vs re-encoding                d +0.48  95% CI [+0.17, +0.77]  p = 0.0021
+  tag mix (% of tokens) and share of tokens in code-mixed comments:
+tag      BAN   ENG  OTHER  ROM_BAN  UNK  code-mixed comments %
+chunks                                                        
+multi   76.1  10.3    5.8      6.4  1.4                   42.0
+single  28.2  28.8    9.7     30.4  3.0                   47.5
+  CTT - word_crf token-accuracy gain by tag:
+                mean   size
+tag     chunks             
+BAN     multi   0.14  10055
+        single  0.11   5233
+ENG     multi   2.36   1355
+        single  2.02   5347
+OTHER   multi   1.18    763
+        single  1.05   1802
+ROM_BAN multi   2.73    843
+        single  1.93   5652
+UNK     multi   4.76    189
+        single  4.71    552
+  multi-chunk gain reweighted to the single-chunk tag mix: 1.80 points
+  split 42, mean over three runs, CTT vs matched word level:
+                    CTT_runs  word_runs  tokens  gain
+position                                             
+boundary               97.69      97.80     620 -0.11
+inside multi-chunk     95.81      95.70    3737  0.11
+single chunk           91.52      90.12    6149  1.40
+  split 42, gain over matched word level by tag:
+                mean  size
+tag     chunks            
+BAN     multi  -0.01  3406
+        single  0.10  1752
+ENG     multi   0.40   495
+        single  1.96  1717
+OTHER   multi  -0.45   220
+        single  1.31   635
+ROM_BAN multi   1.25   187
+        single  2.15  1857
+UNK     multi   0.68    49
+        single  1.24   188
+  split 42: single-chunk gain 1.40; multi-chunk gain 0.08, reweighted to the single-chunk tag mix 0.46
+
+== E. training with and without aligner-recovered comments (split 42, single runs, CRF-tagged word level)
+  all          with aligner  4.43  without  4.47  (1261 comments)
+  all: word level with vs without recovered training comments    d -0.04  95% CI [-0.45, +0.50]  p = 0.8925
+               second run with aligner  4.21
+  all: two runs with vs one run without recovered comments       d -0.15  95% CI [-0.52, +0.26]  p = 0.4675
+  aligned      with aligner  3.87  without  3.66  (1170 comments)
+  aligned: word level with vs without recovered training comments d +0.21  95% CI [-0.20, +0.77]  p = 0.5261
+               second run with aligner  3.76
+  aligned: two runs with vs one run without recovered comments   d +0.16  95% CI [-0.19, +0.54]  p = 0.4501
+  not aligned  with aligner  7.86  without  9.46  (91 comments)
+  not aligned: word level with vs without recovered training comments d -1.60  95% CI [-2.76, -0.60]  p = 0.0015
+               second run with aligner  7.03
+  not aligned: two runs with vs one run without recovered comments d -2.02  95% CI [-3.43, -0.85]  p = 0.0005

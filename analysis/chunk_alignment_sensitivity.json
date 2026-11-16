@@ -1,0 +1,238 @@
+{
+ "single-chunk: CTT vs word_crf (3 splits)": {
+  "d": -0.842030683707115,
+  "lo": -1.2587652053058547,
+  "hi": -0.37927210751120816,
+  "p": 9.999000099990002e-05
+ },
+ "single-chunk: CTT vs re-encoding (3 splits)": {
+  "d": -0.38786095139475524,
+  "lo": -0.80366940026949,
+  "hi": 0.02911996963400989,
+  "p": 0.061693830616938304
+ },
+ "single-chunk: CTT vs matched word (split 42, 3 runs)": {
+  "d": -0.6871828213324664,
+  "lo": -1.1814600350868842,
+  "hi": -0.20740568675253537,
+  "p": 0.005099490050994901
+ },
+ "multi-chunk: CTT vs word_crf (3 splits)": {
+  "d": -0.5611253253099366,
+  "lo": -0.8439221462310057,
+  "hi": -0.31558049706403396,
+  "p": 9.999000099990002e-05
+ },
+ "multi-chunk: CTT vs re-encoding (3 splits)": {
+  "d": -0.08565122382421733,
+  "lo": -0.25027174577334094,
+  "hi": 0.08547205249089368,
+  "p": 0.3324667533246675
+ },
+ "multi-chunk: CTT vs matched word (split 42, 3 runs)": {
+  "d": -0.12690910682245854,
+  "lo": -0.2965712306534139,
+  "hi": 0.01879509964703968,
+  "p": 0.10768923107689231
+ },
+ "aligned: CTT vs word_crf (3 splits)": {
+  "d": -0.4397330642572123,
+  "lo": -0.7078186508672955,
+  "hi": -0.1440732132840312,
+  "p": 0.0004999500049995
+ },
+ "aligned: CTT vs re-encoding (3 splits)": {
+  "d": -0.2321928175021786,
+  "lo": -0.48231336774928224,
+  "hi": 0.03435819917707056,
+  "p": 0.0908909109089091
+ },
+ "aligned: CTT vs matched word (split 42, 3 runs)": {
+  "d": -0.3979618830728178,
+  "lo": -0.7055362023743553,
+  "hi": -0.06372652825479895,
+  "p": 0.009299070092990702
+ },
+ "not aligned: CTT vs word_crf (3 splits)": {
+  "d": -2.509912471010698,
+  "lo": -3.3464703697902753,
+  "hi": -1.7938798956476825,
+  "p": 9.999000099990002e-05
+ },
+ "not aligned: CTT vs re-encoding (3 splits)": {
+  "d": -0.3740555098376599,
+  "lo": -0.7388098696162261,
+  "hi": -0.025897184185755987,
+  "p": 0.04889511048895111
+ },
+ "not aligned: CTT vs matched word (split 42, 3 runs)": {
+  "d": -0.6546355272469923,
+  "lo": -1.1073907194137937,
+  "hi": -0.24163355041482856,
+  "p": 0.004899510048995101
+ },
+ "token accuracy boundary: CTT vs word_crf": {
+  "d": 0.32751091703056767,
+  "lo": -0.18404907975460122,
+  "hi": 0.8172231618077995,
+  "p": 0.3124687531246875
+ },
+ "token accuracy boundary: CTT vs re-encoding": {
+  "d": -0.2183406113537118,
+  "lo": -0.6666666666666666,
+  "hi": 0.21167969675432338,
+  "p": 0.48675132486751327
+ },
+ "token accuracy inside multi-chunk: CTT vs word_crf": {
+  "d": 0.7122131363756264,
+  "lo": 0.3841575350686323,
+  "hi": 1.0711990524738058,
+  "p": 9.999000099990002e-05
+ },
+ "token accuracy inside multi-chunk: CTT vs re-encoding": {
+  "d": 0.1406840763211114,
+  "lo": -0.14888400956622133,
+  "hi": 0.4126082551088609,
+  "p": 0.36076392360763926
+ },
+ "token accuracy single chunk: CTT vs word_crf": {
+  "d": 1.4419455504142904,
+  "lo": 1.0636981093802773,
+  "hi": 1.8300641640180972,
+  "p": 9.999000099990002e-05
+ },
+ "token accuracy single chunk: CTT vs re-encoding": {
+  "d": 0.4788550521898203,
+  "lo": 0.16717509519299162,
+  "hi": 0.7673909875137795,
+  "p": 0.0020997900209979003
+ },
+ "composition": {
+  "BAN": {
+   "multi": 76.15,
+   "single": 28.16
+  },
+  "ENG": {
+   "multi": 10.26,
+   "single": 28.77
+  },
+  "OTHER": {
+   "multi": 5.78,
+   "single": 9.7
+  },
+  "ROM_BAN": {
+   "multi": 6.38,
+   "single": 30.41
+  },
+  "UNK": {
+   "multi": 1.43,
+   "single": 2.97
+  },
+  "code-mixed comments %": {
+   "multi": 41.97,
+   "single": 47.5
+  }
+ },
+ "multi_gain_reweighted": 1.8040989517006794,
+ "positions": {
+  "word_crf": {
+   "boundary": 97.22,
+   "inside multi-chunk": 94.48,
+   "single chunk": 89.77
+  },
+  "re-encoding": {
+   "boundary": 97.76,
+   "inside multi-chunk": 95.05,
+   "single chunk": 90.73
+  },
+  "context-only": {
+   "boundary": 97.38,
+   "inside multi-chunk": 95.03,
+   "single chunk": 91.05
+  },
+  "CTT": {
+   "boundary": 97.54,
+   "inside multi-chunk": 95.19,
+   "single chunk": 91.21
+  },
+  "tokens": {
+   "boundary": 1832,
+   "inside multi-chunk": 11373,
+   "single chunk": 18586
+  },
+  "share %": {
+   "boundary": 5.76,
+   "inside multi-chunk": 35.77,
+   "single chunk": 58.46
+  },
+  "CTT - word_crf": {
+   "boundary": 0.33,
+   "inside multi-chunk": 0.71,
+   "single chunk": 1.44
+  },
+  "CTT - re-encoding": {
+   "boundary": -0.22,
+   "inside multi-chunk": 0.14,
+   "single chunk": 0.48
+  }
+ },
+ "positions42": {
+  "CTT_runs": {
+   "boundary": 97.69,
+   "inside multi-chunk": 95.81,
+   "single chunk": 91.52
+  },
+  "word_runs": {
+   "boundary": 97.8,
+   "inside multi-chunk": 95.7,
+   "single chunk": 90.12
+  },
+  "tokens": {
+   "boundary": 620,
+   "inside multi-chunk": 3737,
+   "single chunk": 6149
+  },
+  "gain": {
+   "boundary": -0.11,
+   "inside multi-chunk": 0.11,
+   "single chunk": 1.4
+  }
+ },
+ "multi_gain_reweighted_42": 0.460718532031676,
+ "all: word level with vs without recovered training comments": {
+  "d": -0.0415541242468315,
+  "lo": -0.449674804971717,
+  "hi": 0.49969573785311,
+  "p": 0.8925107489251075
+ },
+ "all: two runs with vs one run without recovered comments": {
+  "d": -0.14766554866284765,
+  "lo": -0.5232384973078203,
+  "hi": 0.25905516520761324,
+  "p": 0.4674532546745325
+ },
+ "aligned: word level with vs without recovered training comments": {
+  "d": 0.21220799834374246,
+  "lo": -0.20046963111431487,
+  "hi": 0.7713229937344057,
+  "p": 0.5261473852614739
+ },
+ "aligned: two runs with vs one run without recovered comments": {
+  "d": 0.15613677926917635,
+  "lo": -0.18636940898553633,
+  "hi": 0.5356720537937676,
+  "p": 0.4500549945005499
+ },
+ "not aligned: word level with vs without recovered training comments": {
+  "d": -1.6029723991507432,
+  "lo": -2.7612509074342517,
+  "hi": -0.5960540524338434,
+  "p": 0.0014998500149985001
+ },
+ "not aligned: two runs with vs one run without recovered comments": {
+  "d": -2.0169851380042463,
+  "lo": -3.4251910937727676,
+  "hi": -0.845512761266335,
+  "p": 0.0004999500049995
+ }
+}
