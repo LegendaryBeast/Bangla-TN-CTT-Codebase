@@ -1,6 +1,6 @@
-# Context Without Re-Encoding: code, splits, annotations, and outputs
+# One Encoding for Every Word: code, splits, annotations, and outputs
 
-This is the release for the article *Context Without Re-Encoding: Efficient Lexical Normalization of Code-Mixed
+This is the release for the article *One Encoding for Every Word: Efficient Lexical Normalization of Code-Mixed
 Bengali–English Text* (T. H. Prappo, N. Gazi, N. Islam, M. S. Rahman; Shahjalal University of Science and
 Technology). It contains:
 
