@@ -51,7 +51,13 @@ python analysis/randomization_tests.py
 python analysis/codemixed_eval.py
 python analysis/analyze_mln.py
 python analysis/mln_copy_err.py
+python analysis/clustered_tests.py
 ```
+
+The confidence intervals and p-values in the article come from `analysis/clustered_tests.py`. It swaps and resamples
+all appearances of a near-duplicate group together, across splits and training runs, and on MultiLexNorm all seeds of
+a test sentence together; its output is `analysis/clustered_tests_output.txt`. `randomization_tests.py`,
+`analyze_seeds.py`, and `codemixed_eval.py` give the earlier comment-level versions of the same tests.
 
 The exactness of one shared encoder pass and the encoder cost of per-word re-encoding (Proposition 1 and the
 second-hardware timing in the article) are checked with

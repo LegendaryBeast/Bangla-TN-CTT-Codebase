@@ -146,15 +146,29 @@ say(TAB[["subset", "system", "runs"] + [f"{r}_{m}" for r in ("silver", "adjudica
     .to_string(index=False))
 
 
+import re, unicodedata
+_raw = pd.read_csv(os.path.join(ROOT, "data", "BanglaMix.csv")).set_index("id")
+_key = _raw.cleaned_text.map(lambda s: re.sub(r"[^a-zঀ-৿]", "", unicodedata.normalize("NFC", s.lower())))
+GROUP = dict(zip(_raw.index, pd.factorize(_key)[0]))
+
+
 def randtest(pa, pb, ids, ref):
-    e = np.concatenate([x.loc[ids, ref + "_ce"].values - y.loc[ids, ref + "_ce"].values for x, y in zip(pa, pb)]).astype(float)
-    L = sum(x.loc[ids, ref + "_cn"].sum() for x in pa)
-    d = 100 * e.sum() / L
-    null = 100 * (rng.choice([-1.0, 1.0], size=(R_ITER, len(e))) @ e) / L
-    return d, (np.sum(np.abs(null) >= abs(d) - 1e-12) + 1) / (R_ITER + 1)
+    g = pd.factorize(pd.Series([GROUP[c] for c in ids]))[0]
+    agg = lambda runs, col: np.bincount(g, sum(x.loc[ids, ref + col].values.astype(float) for x in runs), minlength=g.max() + 1)
+    Ea, La, Eb, Lb = agg(pa, "_ce"), agg(pa, "_cn"), agg(pb, "_ce"), agg(pb, "_cn")
+    stat = lambda ea, la, eb, lb: 100 * (ea / la - eb / lb)
+    d = stat(Ea.sum(), La.sum(), Eb.sum(), Lb.sum())
+    sw = rng.rand(R_ITER, len(Ea)) < 0.5
+    dE, dL = sw @ (Eb - Ea), sw @ (Lb - La)
+    null = stat(Ea.sum() + dE, La.sum() + dL, Eb.sum() - dE, Lb.sum() - dL)
+    idx = rng.randint(0, len(Ea), size=(2000, len(Ea)))
+    boot = stat(Ea[idx].sum(1), La[idx].sum(1), Eb[idx].sum(1), Lb[idx].sum(1))
+    return d, (np.sum(np.abs(null) >= abs(d) - 1e-12) + 1) / (R_ITER + 1), np.percentile(boot, [2.5, 97.5])
 
 
-say("\ntwo-sided paired randomization tests, dCER (negative favours the first system)")
+say("\ntwo-sided paired randomization tests, dCER = difference of pooled CERs, each system with its own reference length "
+    "(negative favours the first system); all runs of a comment and all comments of a near-duplicate group are swapped "
+    "and resampled together; 95% CI from 2,000 cluster bootstrap resamples")
 pairs = [("CTT", "Word level (matched)", "3 runs pooled"), ("Context-only CTT", "Word level (matched)", "3 runs pooled"),
          ("CTT", "ÚFAL-style re-encoding", "original CTT run"), ("Context-only CTT", "ÚFAL-style re-encoding", "original run"),
          ("CTT, copy gate", "CTT", "3 runs pooled"), ("CTT", "word_crf", "original CTT run")]
@@ -165,8 +179,8 @@ for sub in ("all", "code-mixed"):
             pa = pa[:1]
         out = []
         for ref in ("silver", "adjudicated", "variants"):
-            d, p = randtest(pa, pb, SUB[sub], ref)
-            out.append(f"{ref} {d:+.2f} (p={p:.4f})")
+            d, p, ci = randtest(pa, pb, SUB[sub], ref)
+            out.append(f"{ref} {d:+.2f} [{ci[0]:+.2f}, {ci[1]:+.2f}] (p={p:.4f})")
         say(f"  {sub:10s} {a} vs {b} [{how}]: " + "; ".join(out))
 open(args.out + "_report.txt", "w", encoding="utf-8").write("\n".join(lines) + "\n")
 K.assign(final=[show(t) for t in K.final], variants=["|".join(show(x) for x in v) for v in K.variants])[

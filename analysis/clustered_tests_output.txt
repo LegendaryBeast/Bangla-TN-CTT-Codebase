@@ -1,0 +1,82 @@
+== 0. repeated items
+  test appearances over three splits 3786, unique comments 3435, comments in more than one split 342, near-duplicate groups 3167
+  split 42: 1261 comments in 1148 near-duplicate groups
+
+== A. three splits, one run each (unguarded); clusters = near-duplicate groups across splits
+  ctx_plain_aks_heads vs word_crf                            d -0.71  95% CI [-0.97, -0.45]  p = 0.0001  (3786 observations, 3167 clusters)
+  ctx_plain vs word_crf                                      d -0.70  95% CI [-0.92, -0.51]  p = 0.0001  (3786 observations, 3167 clusters)
+  ctx_plain_aks_heads vs ufal_plain                          d -0.25  95% CI [-0.50, -0.02]  p = 0.0322  (3786 observations, 3167 clusters)
+  ctx_plain vs ufal_plain                                    d -0.24  95% CI [-0.49, -0.03]  p = 0.0421  (3786 observations, 3167 clusters)
+  ctx_plain_aks_heads vs ctx_plain                           d -0.01  95% CI [-0.19, +0.19]  p = 0.9204  (3786 observations, 3167 clusters)
+  copy gate vs free decoding (CTT)                           d -0.01  95% CI [-0.03, +0.01]  p = 0.2575  (3786 observations, 3167 clusters)
+  8 epochs vs 5 epochs (CTT)                                 d +0.12  95% CI [-0.03, +0.29]  p = 0.1450  (3786 observations, 3167 clusters)
+  ByT5-base vs ByT5-small (splits 13, 42)                    d +0.44  95% CI [+0.09, +0.82]  p = 0.0161  (2524 observations, 2231 clusters)
+
+== B. split 42, three training runs pooled (unguarded); clusters = near-duplicate groups, all runs together
+  CTT vs word CER                                            d -0.43  95% CI [-0.71, -0.14]  p = 0.0009  (3783 observations, 1148 clusters)
+  ctx vs word CER                                            d -0.57  95% CI [-0.95, -0.25]  p = 0.0001  (3783 observations, 1148 clusters)
+  CTT vs ctx CER                                             d +0.14  95% CI [-0.12, +0.47]  p = 0.4105  (3783 observations, 1148 clusters)
+  CTT vs word WER                                            d -0.91  95% CI [-1.22, -0.58]  p = 0.0001  (3783 observations, 1148 clusters)
+  CTT vs word EM                                             d +3.46  95% CI [+1.85, +5.27]  p = 0.0001  (3783 observations, 1148 clusters)
+  ctx vs word WER                                            d -0.80  95% CI [-1.09, -0.49]  p = 0.0001  (3783 observations, 1148 clusters)
+  ctx vs word EM                                             d +2.85  95% CI [+1.24, +4.74]  p = 0.0004  (3783 observations, 1148 clusters)
+
+== C. ablations on split 42 (single runs); clusters = near-duplicate groups
+  recover unaligned data raw                                 d -0.04  95% CI [-0.45, +0.50]  p = 0.8925  (1261 observations, 1148 clusters)
+  recover unaligned data guarded                             d -0.28  95% CI [-0.53, -0.03]  p = 0.0317  (1261 observations, 1148 clusters)
+  add context raw                                            d -0.14  95% CI [-0.77, +0.50]  p = 0.7252  (1261 observations, 1148 clusters)
+  add context guarded                                        d -0.21  95% CI [-0.41, -0.01]  p = 0.0362  (1261 observations, 1148 clusters)
+  remove CRF tags raw                                        d -0.65  95% CI [-1.27, -0.15]  p = 0.0062  (1261 observations, 1148 clusters)
+  remove CRF tags guarded                                    d -0.18  95% CI [-0.36, -0.02]  p = 0.0377  (1261 observations, 1148 clusters)
+  remove joint LID raw                                       d -0.79  95% CI [-1.28, -0.39]  p = 0.0001  (1261 observations, 1148 clusters)
+  remove joint LID guarded                                   d -0.37  95% CI [-0.55, -0.17]  p = 0.0001  (1261 observations, 1148 clusters)
+
+== D. code-mixed and monolingual comments
+  code-mixed: ctx_plain_aks_heads vs ufal_plain (3 splits)   d -0.42  95% CI [-0.80, -0.12]  p = 0.0039  (1391 observations, 1234 clusters)
+  code-mixed: ctx_plain_aks_heads vs word_crf (3 splits)     d -0.95  95% CI [-1.24, -0.69]  p = 0.0001  (1391 observations, 1234 clusters)
+  code-mixed: ctx_plain vs ufal_plain (3 splits)             d -0.26  95% CI [-0.62, +0.01]  p = 0.0977  (1391 observations, 1234 clusters)
+  code-mixed: CTT vs matched word (3 runs)                   d -0.57  95% CI [-0.95, -0.28]  p = 0.0001  (1392 observations, 456 clusters)
+  code-mixed: ctx vs matched word (3 runs)                   d -0.47  95% CI [-0.85, -0.19]  p = 0.0004  (1392 observations, 456 clusters)
+  monolingual: ctx_plain_aks_heads vs ufal_plain (3 splits)  d -0.07  95% CI [-0.39, +0.27]  p = 0.6926  (2271 observations, 1885 clusters)
+  monolingual: ctx_plain_aks_heads vs word_crf (3 splits)    d -0.29  95% CI [-0.66, +0.11]  p = 0.1781  (2271 observations, 1885 clusters)
+  monolingual: ctx_plain vs ufal_plain (3 splits)            d -0.28  95% CI [-0.62, -0.01]  p = 0.0651  (2271 observations, 1885 clusters)
+  monolingual: CTT vs matched word (3 runs)                  d -0.31  95% CI [-0.57, -0.03]  p = 0.0173  (2241 observations, 675 clusters)
+  monolingual: ctx vs matched word (3 runs)                  d -0.59  95% CI [-1.23, -0.18]  p = 0.0009  (2241 observations, 675 clusters)
+
+== E. language-switch tokens, Bengali script and Romanized Bengali counted as one language
+  original (BAN and ROM_BAN differ); three splits pooled
+        word_crf  ufal_plain  ctx_plain  ctx_plain_aks_heads  tokens  gain CTT - word_crf
+switch                                                                                   
+False      91.51       92.37      92.20                92.57    7554                 1.06
+True       86.28       87.87      88.28                88.57    5400                 2.30
+  collapsed; three splits pooled
+        word_crf  ufal_plain  ctx_plain  ctx_plain_aks_heads  tokens  gain CTT - word_crf
+switch                                                                                   
+False      91.56       92.36      92.26                92.57    7882                 1.00
+True       85.86       87.60      87.93                88.33    5072                 2.46
+  gain by tag (points):
+                mean  size
+tag     switch            
+BAN     False   0.20  3560
+        True    0.34   580
+ENG     False   2.23  1522
+        True    1.95  2303
+ROM_BAN False   1.36  2800
+        True    3.56  2189
+  non-switch gain reweighted to the tag mix of switch tokens: 1.62 points
+  split 42, three training runs (mean accuracy over runs):
+         word    ctx    CTT  tokens  gain CTT - word
+switch                                              
+False   92.18  92.93  92.98    2596             0.80
+True    87.85  88.82  89.50    1679             1.65
+
+== F. MultiLexNorm ERR, three seeds pooled; clusters = test sentences across seeds
+  iden ctx_copy vs ufal (dERR)                               d +1.03  95% CI [-1.44, +3.39]  p = 0.4384  (495 observations, 165 clusters)
+  iden ctx vs word (dERR)                                    d +0.46  95% CI [-2.68, +3.50]  p = 0.8013  (495 observations, 165 clusters)
+  iden ctx_copy vs ctx (dERR)                                d +1.66  95% CI [-0.10, +3.53]  p = 0.0868  (495 observations, 165 clusters)
+  trde ctx_copy vs ufal (dERR)                               d -1.40  95% CI [-2.73, -0.03]  p = 0.0539  (687 observations, 229 clusters)
+  trde ctx vs word (dERR)                                    d +18.78  95% CI [+15.99, +21.49]  p = 0.0001  (687 observations, 229 clusters)
+  trde ctx_copy vs ctx (dERR)                                d -0.03  95% CI [-1.13, +1.14]  p = 1.0000  (687 observations, 229 clusters)
+
+== G. LID macro-F1, XLM-R minus CRF, mean over three splits; clusters = near-duplicate groups across splits
+  XLM-R - CRF macro-F1 +2.04  95% CI [+1.35, +2.79]  p = 0.0005  (2,000 permutations and resamples, 3167 clusters)
