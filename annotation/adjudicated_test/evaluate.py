@@ -189,7 +189,7 @@ for sub in ("all", "code-mixed"):
             out.append(f"{ref} {d:+.2f} (p={p:.4f})")
         say(f"  {sub:10s} {a} vs {b} [{how}]: " + "; ".join(out))
 open(args.out + "_report.txt", "w", encoding="utf-8").write("\n".join(lines) + "\n")
-K.assign(final=[show(t) for t in K.final], variants=["|".join(v) for v in K.variants])[
+K.assign(final=[show(t) for t in K.final], variants=["|".join(show(x) for x in v) for v in K.variants])[
     ["item_id", "comment_id", "token_no", "source_token", "lid_tag", "silver_target", "final", "variants", "changed"]
 ].to_csv(args.out + "_references.csv", index=False, encoding="utf-8")
 print(f"\nwrote {args.out}_report.txt, {args.out}_scores.csv, {args.out}_references.csv")

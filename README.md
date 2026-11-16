@@ -167,9 +167,9 @@ All annotators are authors of the article; the error labels were made by the fir
 ## Adjudicated test subset
 
 `annotation/adjudicated_test/` holds the material for a human-adjudicated reference on 600 split-42 test comments
-(all 464 code-mixed comments and 136 monolingual ones): the sampling script, two identical blind annotation sheets
-per annotator (pilot and full), the guidelines, and the scripts for agreement, adjudication, and rescoring. See its
-`README.md` for the workflow.
+(all 464 code-mixed comments and 136 monolingual ones): the sampling script, the guidelines, the blank and the two
+completed independent annotation sheets, the adjudication, the final references, and the scripts and outputs for
+agreement and rescoring (Sections 5.4 and 9.4 and Table 12 of the article). See its `README.md`.
 
 ## Citation
 

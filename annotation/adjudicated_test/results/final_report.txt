@@ -1,0 +1,38 @@
+subset: 600 comments (464 code-mixed, 136 monolingual), 7275 tokens; copy-gate comments scored from the saved text (spans not recoverable): 4
+silver targets changed by adjudication: 2.46% of tokens; comments with any change: 13.5%; tokens with accepted variants: 11.64%
+changed tokens by LID tag (%): {'BAN': 1.2, 'ENG': 3.02, 'OTHER': 2.32, 'ROM_BAN': 3.11, 'UNK': 5.3}
+
+CER / WER / EM (mean over runs) against the silver, adjudicated, and variant-aware references
+     subset                 system  runs  silver_CER  silver_WER  silver_EM  adjudicated_CER  adjudicated_WER  adjudicated_EM  variants_CER  variants_WER  variants_EM
+        all               word_crf     1        5.09       11.09      43.83             5.06            10.82           42.83          4.39          8.92        48.00
+        all   Word level (matched)     3        5.01       11.03      44.50             4.90            10.71           43.89          4.26          8.80        49.06
+        all ÚFAL-style re-encoding     1        4.56       10.08      48.67             4.62             9.84           47.67          3.90          7.90        53.17
+        all       Context-only CTT     3        4.54       10.31      47.28             4.44             9.93           46.67          3.83          8.11        51.56
+        all                    CTT     3        4.46       10.09      48.83             4.43             9.80           47.67          3.78          7.96        53.28
+        all         CTT, copy gate     3        4.47       10.05      48.83             4.46             9.85           47.44          3.81          7.99        53.28
+ code-mixed               word_crf     1        5.64       12.28      35.78             5.61            11.90           35.34          4.83          9.70        41.59
+ code-mixed   Word level (matched)     3        5.54       12.28      36.49             5.44            11.83           36.35          4.70          9.66        42.17
+ code-mixed ÚFAL-style re-encoding     1        5.09       11.16      41.38             5.19            10.81           40.73          4.34          8.59        47.20
+ code-mixed       Context-only CTT     3        5.07       11.55      39.01             4.98            11.02           39.08          4.27          8.95        44.90
+ code-mixed                    CTT     3        4.97       11.30      40.73             4.96            10.90           40.09          4.21          8.80        46.62
+ code-mixed         CTT, copy gate     3        4.98       11.25      40.66             5.00            10.95           39.73          4.24          8.82        46.55
+monolingual               word_crf     1        2.46        5.20      71.32             2.41             5.52           68.38          2.30          5.11        69.85
+monolingual   Word level (matched)     3        2.42        4.93      71.81             2.30             5.25           69.61          2.15          4.58        72.55
+monolingual ÚFAL-style re-encoding     1        2.02        4.79      73.53             1.90             5.11           71.32          1.76          4.47        73.53
+monolingual       Context-only CTT     3        1.96        4.22      75.49             1.84             4.55           72.55          1.71          3.98        74.26
+monolingual                    CTT     3        2.01        4.12      76.47             1.89             4.44           73.53          1.74          3.82        75.98
+monolingual         CTT, copy gate     3        2.00        4.14      76.72             1.88             4.46           73.77          1.74          3.87        76.23
+
+two-sided paired randomization tests, dCER (negative favours the first system)
+  all        CTT vs Word level (matched) [3 runs pooled]: silver -0.54 (p=0.0001); adjudicated -0.47 (p=0.0001); variants -0.48 (p=0.0001)
+  all        Context-only CTT vs Word level (matched) [3 runs pooled]: silver -0.47 (p=0.0001); adjudicated -0.46 (p=0.0001); variants -0.43 (p=0.0001)
+  all        CTT vs ÚFAL-style re-encoding [original CTT run]: silver -0.16 (p=0.8939); adjudicated -0.21 (p=0.7970); variants -0.15 (p=0.9018)
+  all        Context-only CTT vs ÚFAL-style re-encoding [original run]: silver -0.34 (p=0.4454); adjudicated -0.37 (p=0.3718); variants -0.29 (p=0.6061)
+  all        CTT, copy gate vs CTT [3 runs pooled]: silver +0.01 (p=0.7668); adjudicated +0.03 (p=0.0938); variants +0.03 (p=0.0245)
+  all        CTT vs word_crf [original CTT run]: silver -0.69 (p=0.0007); adjudicated -0.65 (p=0.0058); variants -0.65 (p=0.0035)
+  code-mixed CTT vs Word level (matched) [3 runs pooled]: silver -0.57 (p=0.0001); adjudicated -0.48 (p=0.0001); variants -0.49 (p=0.0001)
+  code-mixed Context-only CTT vs Word level (matched) [3 runs pooled]: silver -0.47 (p=0.0001); adjudicated -0.46 (p=0.0002); variants -0.43 (p=0.0002)
+  code-mixed CTT vs ÚFAL-style re-encoding [original CTT run]: silver -0.23 (p=0.8860); adjudicated -0.29 (p=0.7633); variants -0.22 (p=0.9032)
+  code-mixed Context-only CTT vs ÚFAL-style re-encoding [original run]: silver -0.32 (p=0.6867); adjudicated -0.36 (p=0.5959); variants -0.27 (p=0.8034)
+  code-mixed CTT, copy gate vs CTT [3 runs pooled]: silver +0.01 (p=0.6985); adjudicated +0.04 (p=0.0630); variants +0.03 (p=0.0207)
+  code-mixed CTT vs word_crf [original CTT run]: silver -0.78 (p=0.0002); adjudicated -0.72 (p=0.0031); variants -0.71 (p=0.0033)

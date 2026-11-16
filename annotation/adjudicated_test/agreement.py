@@ -83,15 +83,18 @@ open(args.out + "_agreement.txt", "w", encoding="utf-8").write("\n".join(lines) 
 # ---------------------------------------------------------------- agreed tokens and adjudication sheet
 need = (~exact) | (~same_set) | (A.flag != "").values | (B.flag != "").values
 agreed = pd.DataFrame({"item_id": np.array(items)[~need], "final_target": [show(t) for t in A.target[~need]],
-                       "final_variants": ["|".join(v) for v in A.variants[~need]]})
+                       "final_variants": ["|".join(show(x) for x in v) for v in A.variants[~need]]})
 agreed.to_csv(args.out + "_agreed.csv", index=False, encoding="utf-8")
 
-cols = [("item_id", 11), ("comment_no", 10), ("source_token", 16), ("lid_tag", 9), ("context", 55), ("silver_target", 16),
+reason = np.where(~exact, "1 target", np.where(~same_set, "2 variants only", "3 flag only"))
+cols = [("item_id", 11), ("comment_no", 10), ("disagreement", 14), ("source_token", 16), ("lid_tag", 9), ("context", 55), ("silver_target", 16),
         ("A_target", 16), ("A_variants", 18), ("A_flag", 14), ("A_notes", 20), ("B_target", 16), ("B_variants", 18),
         ("B_flag", 14), ("B_notes", 20), ("final_target", 18), ("final_variants", 20), ("adjudicator_notes", 24)]
 wb = Workbook(); ws0 = wb.active; ws0.title = "instructions"
 for i, line in enumerate([
         "Adjudication sheet: tokens on which annotators A and B differ (target, variants, or flag).",
+        "Rows are grouped by the column 'disagreement': '1 target' rows need a final_target; '2 variants only' and '3 flag only' rows",
+        "already have final_target prefilled (A and B agree on it) and only need the variant list or the flag checked.",
         "For every row, enter final_target and final_variants (variants separated by |). Read GUIDELINES.md first.",
         f"final_target is prefilled only where A and B gave the same target. Write {EMPTY} for a deliberately empty target.",
         "Leave no final_target blank. Do not reorder rows or edit the other columns."], 1):
@@ -101,13 +104,15 @@ YEL, GREY = PatternFill("solid", fgColor="FFF7D6"), PatternFill("solid", fgColor
 for j, (n, w) in enumerate(cols, 1):
     c = ws.cell(1, j, n); c.font = Font(bold=True); c.fill = YEL if n.startswith("final") or n.startswith("adjud") else GREY
     ws.column_dimensions[c.column_letter].width = w
-for r, i in enumerate(np.array(items)[need], 2):
+ORD = sorted(np.flatnonzero(need), key=lambda x: (reason[x], x))
+for r, x in enumerate(ORD, 2):
+    i = items[x]
     a, b, k = A.loc[i], B.loc[i], K.loc[i]
-    vals = dict(item_id=i, comment_no=k.comment_no, source_token=k.source_token, lid_tag=k.lid_tag, context=k.context,
-                silver_target=show(k.silver_target_raw), A_target=show(a.target), A_variants="|".join(a.variants),
-                A_flag=a.flag, A_notes=a.notes, B_target=show(b.target), B_variants="|".join(b.variants), B_flag=b.flag,
+    vals = dict(item_id=i, comment_no=k.comment_no, disagreement=reason[x], source_token=k.source_token, lid_tag=k.lid_tag, context=k.context,
+                silver_target=show(k.silver_target_raw), A_target=show(a.target), A_variants="|".join(show(x) for x in a.variants),
+                A_flag=a.flag, A_notes=a.notes, B_target=show(b.target), B_variants="|".join(show(x) for x in b.variants), B_flag=b.flag,
                 B_notes=b.notes, final_target=show(a.target) if a.target == b.target else "",
-                final_variants="|".join(sorted(set(a.variants) | set(b.variants))) if a.target == b.target else "",
+                final_variants="|".join(show(x) for x in sorted(set(a.variants) | set(b.variants))) if a.target == b.target else "",
                 adjudicator_notes="")
     for j, (n, _) in enumerate(cols, 1):
         cell = ws.cell(r, j, vals[n]); cell.number_format = "@"
@@ -115,4 +120,5 @@ for r, i in enumerate(np.array(items)[need], 2):
 ws.freeze_panes = "C2"
 wb.save(args.out + "_adjudication.xlsx")
 print(f"\nwrote {args.out}_agreement.txt, {args.out}_agreed.csv ({len(agreed)} tokens), "
-      f"{args.out}_adjudication.xlsx ({int(need.sum())} tokens)")
+      f"{args.out}_adjudication.xlsx ({int(need.sum())} tokens: "
+      + ", ".join(f"{n} {k}" for k, n in zip(*np.unique(reason[need], return_counts=True))) + ")")

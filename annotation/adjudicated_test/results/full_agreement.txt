@@ -1,0 +1,20 @@
+items: 7275 tokens in 600 comments
+tokens changed from silver: A 2.3%, B 2.0%; both 1.7%
+Cohen's kappa (changed vs unchanged): 0.768
+exact agreement on corrected_target: 98.89%   compatible agreement: 99.37%   identical accepted-form sets: 92.07%
+   among tokens changed by at least one annotator (192): exact 57.8%, compatible 76.0%
+comments with identical references: 90.3%   CER of B against A: 0.84%
+
+change rate (%) by LID tag and subset
+           A    B  exact  tokens
+tag                             
+BAN      0.9  1.1   99.3    2342
+ENG      2.9  2.9   98.8    1888
+OTHER    2.3  1.2   98.3     518
+ROM_BAN  2.9  2.3   98.8    2376
+UNK      5.3  4.6   96.7     151
+               A    B  exact  tokens
+monolingual  0.8  0.7   99.7    1226
+code-mixed   2.6  2.3   98.7    6049
+
+flags: A {'token misaligned': 42, 'offensive or personal data': 33, 'source unclear': 2}; B {'offensive or personal data': 31, 'token misaligned': 30, 'source unclear': 4}
