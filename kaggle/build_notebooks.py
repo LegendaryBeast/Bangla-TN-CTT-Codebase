@@ -1,6 +1,3 @@
-"""Builds kaggle/notebooks/*.ipynb from kaggle/src/nb*.py (cells split on '# %%'), analysis/nb7 from analysis/src,
-and kaggle/kaggle_dataset.zip (the Kaggle dataset: BanglaMix.csv, splits, CRF predictions, noise matrix).
-Run from anywhere:  python kaggle/build_notebooks.py"""
 import glob
 import json
 import os
@@ -25,7 +22,6 @@ def to_nb(src_path, out_path):
 
     for line in open(src_path, encoding="utf-8").read().splitlines():
         if line.startswith("# %% writefile "):
-            # embed a sibling source file as a %%writefile cell, so the script stays testable on its own
             flush()
             name = line.split()[-1]
             body = open(os.path.join(os.path.dirname(src_path), name), encoding="utf-8").read().rstrip("\n")
@@ -47,14 +43,13 @@ for src in sorted(glob.glob(os.path.join(HERE, "src", "nb*.py"))):
     out = os.path.join(HERE, "notebooks", os.path.basename(src).replace(".py", ".ipynb"))
     to_nb(src, out)
     print("built", out)
-for src in sorted(glob.glob(os.path.join(ROOT, "analysis", "src", "nb*.py"))):      # local notebooks: no GPU flag
+for src in sorted(glob.glob(os.path.join(ROOT, "analysis", "src", "nb*.py"))):
     out = os.path.join(ROOT, "analysis", os.path.basename(src).replace(".py", ".ipynb"))
     to_nb(src, out)
     nb = json.load(open(out, encoding="utf-8")); nb["metadata"].pop("accelerator", None)
     json.dump(nb, open(out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print("built", out)
 
-# Kaggle dataset zip, built from the files kept in data/ and results/cpu/
 import zipfile
 zpath = os.path.join(HERE, "kaggle_dataset.zip")
 with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED) as z:

@@ -1,21 +1,10 @@
-"""Training-seed replicates on split 42 (after nb11): three runs per system, pooled comparisons.
-
-Systems (three training runs each on split 42: the existing seed-42 run + nb11 training seeds 1 and 2):
-  CTT              ctx_plain_aks_heads (nb5 stage 2)  + ctt_ts1, ctt_ts2
-  Context only     ctx_plain (nb5 stage 1)            + ctx_plain_ts1, ctx_plain_ts2
-  Word level       word_plain_align (nb8)             + word_plain_align_ts1, word_plain_align_ts2  (aligned, no tags)
-Prints raw and guarded test CER per run, mean +- std over the three runs, and a paired comment-clustered bootstrap
-that pools the runs (resampling comments within each training seed), so training variance enters the test.
-
-Run from the repo root:  python analysis/analyze_seeds.py
-"""
 import glob, json, os, re, sys, unicodedata
 import numpy as np, pandas as pd
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "kaggle", "src"))
-from banglish_align import join_spans  # noqa: E402
-from rapidfuzz.distance import Levenshtein  # noqa: E402
+from banglish_align import join_spans
+from rapidfuzz.distance import Levenshtein
 
 GPU = os.path.join(ROOT, "results", "gpu")
 RUNS = {
@@ -36,7 +25,7 @@ def bn(s):
     return s.replace("‌", "").replace("‍", "")
 
 
-def guard(span, src):   # identical to rep_guard in kaggle/src/ctt.py
+def guard(span, src):
     mr = max([len(m.group(0)) // len(m.group(1)) for m in RUN.finditer(bn(src).lower())] or [1])
     allowed = max(3, mr + 2)
     return RUN.sub(lambda m: m.group(1) * min(allowed, len(m.group(0)) // len(m.group(1)))

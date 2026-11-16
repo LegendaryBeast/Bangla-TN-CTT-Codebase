@@ -1,15 +1,3 @@
-"""Normalization on code-mixed vs monolingual comments, and at language-switch points (saved outputs only).
-
-Subsets come from BanglaMix's own comment labels (`code_mix_type`, `likely_code_mixed`); references are the silver
-references. No repetition guard.
-
-  A. CER / WER / EM by subset for the controlled systems, three splits (one run each), mean over splits.
-  B. The same for the three split-42 training runs of CTT, context-only CTT, and the matched word level.
-  C. Two-sided paired approximate randomization tests on the code-mixed subset (10,000 permutations).
-  D. Token accuracy at language-switch points (token-aligned code-mixed comments).
-
-Run from the repo root:  python analysis/codemixed_eval.py
-"""
 import contextlib, io, json, os, sys
 import numpy as np, pandas as pd
 
@@ -56,7 +44,6 @@ def randtest(pairs):
     return d, (np.sum(np.abs(null) >= abs(d) - 1e-12) + 1) / (R + 1)
 
 
-# ---------------------------------------------------------------- A. three splits
 SYS = {"word_crf": "word_crf", "ufal_plain": "ÚFAL-style", "ctx_plain": "Context-only CTT", "ctx_plain_aks_heads": "CTT"}
 E = {(v, s): errs(RA.SPANS[(v, s)], RA.TEST[s]) for v in SYS for s in RA.SEEDS}
 SUB = {s: subsets(RA.TEST[s]) for s in RA.SEEDS}
@@ -70,7 +57,6 @@ for k in SUB[42]:
 A = pd.DataFrame(rows)
 print(A.round(2).to_string(index=False))
 
-# ---------------------------------------------------------------- B. split 42, three runs
 RUNS = {"Word level (matched)": ["nb8_oracle_tags/test_spans_word_plain_align_s42.json",
                                  "nb11_train_seeds/test_spans_word_plain_align_ts1_s42.json",
                                  "nb11_train_seeds/test_spans_word_plain_align_ts2_s42.json"],
@@ -91,7 +77,6 @@ for k in ["all", "code-mixed", "monolingual"]:
                          runs=[round(x, 2) for x in m[:, 0]]))
 print(pd.DataFrame(rows).to_string(index=False))
 
-# ---------------------------------------------------------------- C. tests on the code-mixed subset
 print("\n== C. two-sided paired randomization tests, dCER (negative favours the first system)")
 for k in ["code-mixed", "monolingual"]:
     for a, b in [("CTT", "Word level (matched)"), ("Context-only CTT", "Word level (matched)")]:
@@ -102,12 +87,10 @@ for k in ["code-mixed", "monolingual"]:
         d, p = randtest([(E[(a, s)].loc[SUB[s][k]], E[(b, s)].loc[SUB[s][k]]) for s in RA.SEEDS])
         print(f"  {k:12s} {SYS[a]} vs {SYS[b]} (3 splits): dCER {d:+.2f}  p = {p:.4f}")
 
-# ---------------------------------------------------------------- D. switch points
 print("\n== D. token accuracy at language-switch points (token-aligned code-mixed comments; three splits pooled)")
 
 
 def switch_flags(labels):
-    """A language token (BAN/ENG/ROM_BAN) is a switch token if the nearest language token on either side differs."""
     idx = [i for i, l in enumerate(labels) if l in LANG]
     flag = {}
     for k, i in enumerate(idx):

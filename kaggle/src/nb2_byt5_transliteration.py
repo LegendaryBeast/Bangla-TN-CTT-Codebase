@@ -1,18 +1,3 @@
-# %% [markdown]
-# # BanglaMix — Neural Bengali-script normalisation with ByT5 (Kaggle, GPU)
-# Two families, both scored exactly like the local lexicon baselines (CER / WER / exact match on the full
-# normalised `bengali_transliteration`, token accuracy on token-aligned comments):
-#
-# **A. Word-level (routed) ByT5** — one model maps `TAG word → Bengali word`.
-#   Inference ablations: no tag (language-agnostic) · predicted tag · predicted tag + hard copy-gate ·
-#   oracle tag + gate · lexicon-first hybrid.
-#
-# **B. Sentence-level ByT5** — end-to-end comment → Bengali script, plain vs. with inline LID tags.
-#
-# **Setup:** GPU (P100 is faster than T4 in fp32), Internet ON, attach the Kaggle dataset built from `kaggle/kaggle_dataset.zip`.
-# T5-family models overflow in fp16, so training runs in fp32 (bf16 is used automatically on GPUs that support it).
-# Rough T4 runtime: word-level ~25 min per seed; sentence-level ~1.5–2 h for one seed.
-
 # %%
 !pip -q install rapidfuzz 2>/dev/null
 
@@ -38,16 +23,11 @@ DEV = "cuda"
 BF16 = torch.cuda.is_bf16_supported()
 LABELS = ["BAN", "ENG", "ROM_BAN", "OTHER", "UNK"]
 
-# %% [markdown]
-# ## Configuration
-
 # %%
-MODEL = "google/byt5-small"     # alternatives: "google/byt5-base" (A100/L4), "csebuetnlp/banglat5", "google/mt5-small"
+MODEL = "google/byt5-small"
 WORD_SEEDS = [13, 42, 2026]
-SENT_SEEDS = [42]                # sentence-level is slow; add 13 / 2026 if you have GPU quota
+SENT_SEEDS = [42]
 RUN_WORD, RUN_SENT = True, True
-# Which predicted LID to route with: "crf" (local CRF, shipped in kaggle_dataset.zip) or a path pattern to
-# notebook-1 outputs, e.g. "/kaggle/input/<nb1-output>/lid_test_pred_xlm-roberta-base_s{seed}_ce.json"
 LID_SOURCE = "crf"
 
 # %%
@@ -77,7 +57,6 @@ def lid_pred(seed):
     return json.load(open(LID_SOURCE.format(seed=seed)))
 
 def evaluate(te, outputs):
-    """outputs: list of token-lists (or strings) per test comment, same order as te."""
     hyps = [o if isinstance(o, str) else " ".join(o) for o in outputs]
     refs = [" ".join(t) for t in te.targets]
     ce = sum(Levenshtein.distance(h, r) for h, r in zip(hyps, refs)); cn = sum(map(len, refs))
@@ -134,9 +113,6 @@ def generate(model, tok, srcs, max_src, max_tgt, bs=64):
             g = model.generate(**x, max_new_tokens=max_tgt, num_beams=1)
         out += [s.strip() for s in tok.batch_decode(g, skip_special_tokens=True)]
     return out
-
-# %% [markdown]
-# ## A. Word-level routed ByT5
 
 # %%
 def word_pairs(part, tagged, cap=5):
@@ -199,11 +175,8 @@ if RUN_WORD:
         word_rows += run_word(seed)
         pd.DataFrame(word_rows).to_csv(f"{OUT}/byt5_word_results.csv", index=False)
 
-# %% [markdown]
-# ## B. Sentence-level ByT5 (end-to-end)
-
 # %%
-CH = 16   # words per chunk
+CH = 16
 def sent_pairs(part, tagged, tags=None):
     out = []
     for r in part.itertuples():

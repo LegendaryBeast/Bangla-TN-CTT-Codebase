@@ -1,9 +1,3 @@
-"""Extra real analyses used by the paper figures.
-
-  - CRF confusion matrix (seed-42 test)
-  - CRF learning curve (10/25/50/100% of the seed-42 training comments)
-  - Normalisation CER by code-mixing complexity C(c) for the lexicon systems (3 splits)
-"""
 import importlib
 import json
 import os
@@ -20,14 +14,12 @@ tl = importlib.import_module("03_translit_baselines")
 df = load()
 out = {}
 
-# ---- confusion matrix of the CRF on seed-42 test
 d = make_split(df, 42)
 te = d[d.split == "test"]
 crf_pred = pickle.load(open(os.path.join(RESULTS, "crf_pred_seed42.pkl"), "rb"))
 cm = confusion_matrix(flat(te.labels), flat(crf_pred[i] for i in te.id), labels=LABELS)
 out["crf_confusion_seed42"] = cm.tolist()
 
-# ---- learning curve
 tr = d[d.split == "train"]
 rng = np.random.RandomState(0)
 order = rng.permutation(len(tr))
@@ -44,7 +36,6 @@ for frac in (0.1, 0.25, 0.5, 1.0):
 out["crf_learning_curve_seed42"] = curve
 
 
-# ---- CER by complexity C(c) = number of {BAN, ENG, ROM_BAN} present
 def complexity(labels):
     return len({l for l in labels if l in ("BAN", "ENG", "ROM_BAN")})
 

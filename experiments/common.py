@@ -1,4 +1,3 @@
-"""Shared utilities for the BanglaMix experiments: loading, parsing, splits, metrics."""
 import os
 import re
 import unicodedata
@@ -19,7 +18,6 @@ os.makedirs(RESULTS, exist_ok=True)
 
 BN_RE = re.compile(r"[ঀ-৿]")
 LAT_RE = re.compile(r"[A-Za-z]")
-# Bengali nukta letters exist both precomposed and decomposed; NFC does not unify them.
 NUKTA = {"ড়": "ড়", "ঢ়": "ঢ়", "য়": "য়"}
 
 
@@ -51,8 +49,6 @@ def dup_key(s):
 
 
 def make_split(df, seed, frac=(0.8, 0.1, 0.1)):
-    """Stratified (by code_mix_type) split where near-duplicate comments always share a split.
-    Cached to splits/ so the Kaggle notebook uses exactly the same partition."""
     path = os.path.join(SPLIT_DIR, f"split_seed{seed}.csv")
     if os.path.exists(path):
         s = pd.read_csv(path)
@@ -84,7 +80,6 @@ def script_of(w):
     return "none"
 
 
-# ---------------------------------------------------------------- metrics
 def lev(a, b):
     if len(a) < len(b):
         a, b = b, a
@@ -117,7 +112,6 @@ def lid_scores(y_true, y_pred):
 
 
 def cluster_bootstrap(per_comment_true, per_comment_pred, metric, n=1000, seed=0, other_pred=None):
-    """Comment-clustered bootstrap CI; if other_pred is given, also a paired p-value (metric(pred) <= metric(other))."""
     rng = np.random.RandomState(seed)
     m = len(per_comment_true)
     vals, diffs = [], []

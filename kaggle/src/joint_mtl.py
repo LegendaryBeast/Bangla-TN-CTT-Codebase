@@ -1,26 +1,3 @@
-"""Joint multi-task ByT5 for BanglaMix.
-
-One byte-level encoder is shared by
-  (a) a word-level LID head: mean-pooled encoder states over each word's bytes -> 5 classes, and
-  (b) the Bengali-script normalisation decoder.
-With --inject 1, the LID posterior of every word is projected to d_model and added to the encoder
-states of that word's bytes before the decoder cross-attends to them (soft, differentiable routing;
-the projection starts at zero, so training starts from the plain model).
-
-Loss: lam * CE_LID + (1 - lam) * CE_seq2seq
-  lam = 0            -> plain sentence-level ByT5 (baseline, trained under identical settings)
-  lam = 1            -> encoder-only ByT5 LID tagger (decoder untrained, no normalisation output)
-  0 < lam < 1        -> multi-task
-
-At test time four normalisation outputs are scored:
-  free               decoder output as is
-  token-gate         words tagged BAN/OTHER are copied (only when output word count matches input)
-  chunk-skip         chunks whose words are all BAN/OTHER skip the decoder entirely (measured speed-up)
-  chunk-skip+gate    both
-Gating uses the model's own LID head, or the CRF predictions when lam = 0.
-
-Run: python joint_mtl.py --variant mtl_inject --lam 0.4 --inject 1 --seed 42
-"""
 import argparse
 import glob
 import json
@@ -64,11 +41,11 @@ TAG = f"{args.variant}_s{args.seed}"
 
 random.seed(args.seed); np.random.seed(args.seed); torch.manual_seed(args.seed)
 DEV = "cuda" if torch.cuda.is_available() else "cpu"
-BF16 = DEV == "cuda" and torch.cuda.is_bf16_supported()   # T5 overflows in fp16, so fp32 on T4/P100
+BF16 = DEV == "cuda" and torch.cuda.is_bf16_supported()
 LABELS = ["BAN", "ENG", "ROM_BAN", "OTHER", "UNK"]
 L2I = {l: i for i, l in enumerate(LABELS)}
 COPY = ("BAN", "OTHER")
-EOS, OFFSET = 1, 3                                          # ByT5: id = byte + 3, eos = 1, pad = 0
+EOS, OFFSET = 1, 3
 MAX_SRC = 2 * args.src_budget
 NUKTA = {"ড়": "ড়", "ঢ়": "ঢ়", "য়": "য়"}
 BN_DIGITS = str.maketrans("0123456789", "০১২৩৪৫৬৭৮৯")
@@ -95,7 +72,6 @@ def copy_word(w, tag):
     return bn_norm(w).translate(BN_DIGITS) if tag == "OTHER" else bn_norm(w)
 
 
-# ------------------------------------------------------------------ data
 df = pd.read_csv(find("BanglaMix.csv"))
 if args.subsample:
     df = df.sample(args.subsample, random_state=0).reset_index(drop=True)
@@ -147,13 +123,13 @@ def make_examples(part):
                 spans.append((len(ids), len(ids) + len(b)))
                 ids += b
             ids = ids[:MAX_SRC - 1] + [EOS]
-            spans = [(s, min(e, len(ids) - 1)) for s, e in spans]   # words cut by truncation get empty spans
+            spans = [(s, min(e, len(ids) - 1)) for s, e in spans]
             if r.aligned:
                 tgt = " ".join(r.targets[i] for i in idx)
             elif len(idxs) == 1:
                 tgt = " ".join(r.targets)
             else:
-                tgt = None                                            # LID-only example (target not alignable)
+                tgt = None
             ex.append(dict(cid=r.id, chunk=k, widx=idx, words=words, ids=ids, spans=spans,
                            lid=[L2I[r.labels[i]] for i in idx], tgt=tgt,
                            tgt_ids=to_ids(tgt, args.max_tgt) if tgt is not None else None))
@@ -194,7 +170,7 @@ def collate(batch, with_targets=True):
 def batches(ex, bs, shuffle, rng):
     idx = rng.permutation(len(ex)) if shuffle else np.arange(len(ex))
     out = []
-    for m in range(0, len(idx), bs * 50):                     # length bucketing inside mega-batches
+    for m in range(0, len(idx), bs * 50):
         mega = sorted(idx[m:m + bs * 50], key=lambda i: len(ex[i]["ids"]) + len(ex[i]["tgt_ids"] or []))
         out += [mega[i:i + bs] for i in range(0, len(mega), bs)]
     if shuffle:
@@ -202,7 +178,6 @@ def batches(ex, bs, shuffle, rng):
     return out
 
 
-# ------------------------------------------------------------------ model
 class Joint(nn.Module):
     def __init__(self, name, inject):
         super().__init__()
@@ -243,7 +218,6 @@ def decode_bytes(seq):
 
 @torch.no_grad()
 def infer(model, ex, generate=True, bs=16):
-    """Returns (lid tags per example, generated string per example or None, generation seconds)."""
     model.eval()
     tags, texts, gen_time = [None] * len(ex), [None] * len(ex), 0.0
     order = sorted(range(len(ex)), key=lambda i: len(ex[i]["ids"]))
@@ -314,7 +288,6 @@ def chunk_val_cer(model):
     return 100 * sum(Levenshtein.distance(h, r) for h, r in zip(texts, refs)) / sum(map(len, refs))
 
 
-# ------------------------------------------------------------------ train
 model = Joint(args.model, args.inject).to(DEV)
 opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.01)
 rng = np.random.RandomState(args.seed)
@@ -334,7 +307,7 @@ for ep in range(args.epochs):
             else:
                 _, lid_logits = model.encode(ids, att, pool, assign)
         loss = torch.zeros((), device=DEV)
-        if args.lam > 0 and (lid != -100).any():      # guard: CE over an all-ignored batch is NaN, and 0 * NaN = NaN
+        if args.lam > 0 and (lid != -100).any():
             loss = loss + args.lam * F.cross_entropy(lid_logits.float().reshape(-1, len(LABELS)), lid.reshape(-1), ignore_index=-100)
         if args.lam < 1 and (labels != -100).any():
             seq = F.cross_entropy(dec_logits.float().reshape(-1, dec_logits.shape[-1]), labels.reshape(-1), ignore_index=-100)
@@ -354,7 +327,7 @@ for ep in range(args.epochs):
         rec["val_LID_MacroF1"] = lid_scores([[LABELS[i] for i in e["lid"]] for e in va_ex], vt, [e["words"] for e in va_ex])["MacroF1"]
     if args.lam < 1:
         rec["val_chunk_CER"] = chunk_val_cer(model)
-    score = -rec["val_chunk_CER"] if args.lam < 1 else rec["val_LID_MacroF1"]   # normalisation is the primary task
+    score = -rec["val_chunk_CER"] if args.lam < 1 else rec["val_LID_MacroF1"]
     history.append(rec)
     log(f"[{TAG}] " + " ".join(f"{k}={v:.3f}" if isinstance(v, float) else f"{k}={v}" for k, v in rec.items()))
     if best is None or score > best:
@@ -364,7 +337,6 @@ for ep in range(args.epochs):
 model.load_state_dict(best_state)
 
 
-# ------------------------------------------------------------------ test
 def per_comment(ex, values):
     out = {}
     for e, v in zip(ex, values):
@@ -394,7 +366,7 @@ if generate:
 
     skip = [all(t in COPY for t in tg) for tg in gate_tags]
     keep = [i for i, s in enumerate(skip) if not s]
-    _, sub_texts, t_skip = infer(model, [te_ex[i] for i in keep])   # decoder only runs on non-skipped chunks
+    _, sub_texts, t_skip = infer(model, [te_ex[i] for i in keep])
     skip_texts = [" ".join(copy_word(w, t) for w, t in zip(e["words"], tg)) for e, tg in zip(te_ex, gate_tags)]
     for i, txt in zip(keep, sub_texts):
         skip_texts[i] = txt

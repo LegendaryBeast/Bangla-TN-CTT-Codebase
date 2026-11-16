@@ -1,13 +1,9 @@
-"""Post-hoc test of a repetition guard on saved CTT word spans (no GPU).
-Rule, fixed before looking at its effect: a unit of 1-4 characters repeated consecutively in an output span is
-clamped to max(3, longest consecutive repeat run of any 1-4-char unit in the SOURCE token + 2).
-Run from the repo root:  python analysis/repetition_guard.py"""
 import json, os, re, sys, unicodedata
 import numpy as np, pandas as pd
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "kaggle", "src"))
-from banglish_align import join_spans  # noqa: E402
+from banglish_align import join_spans
 
 NB5 = os.path.join(ROOT, "results", "gpu", "nb5_ctt")
 DIRS = [os.path.join(NB5, d) for d in ("stage1_seed42", "stage2_three_splits", "stage3a_8_epochs", "stage3b_byt5_base")]
@@ -70,7 +66,7 @@ for v in ["word_crf", "word_crf_align", "ctx_crf", "ctx_plain", "ctx_joint", "ct
             sp = spans[i]
             g = [guard(x, w) for x, w in zip(sp, toks[i])]
             changed += sum(a != b for a, b in zip(sp, g))
-            runaway += sum(len(x.encode("utf-8")) >= 150 for x in sp)       # near the 160-byte generation cap
+            runaway += sum(len(x.encode("utf-8")) >= 150 for x in sp)
             e0 += lev(join_spans(sp), ref[i]); e1 += lev(join_spans(g), ref[i])
         rows.append(dict(system=v, seed=s, CER=100 * e0 / ln, CER_guard=100 * e1 / ln, spans_changed=changed, runaway_spans=runaway))
 R = pd.DataFrame(rows)
@@ -84,7 +80,6 @@ print(pd.DataFrame({"CER": g.CER.mean().round(2).astype(str) + " ± " + g.CER.st
                     "n": g.size()}).to_string())
 
 
-# ---------------------------------------------------------------- paired bootstrap on guarded outputs (3 splits pooled)
 def comment_errors(v, s):
     spans = json.load(open(find(f"test_spans_{v}_s{s}.json"), encoding="utf-8"))
     ids = sorted(spans)
@@ -110,7 +105,6 @@ for a, b in [("ctx_plain", "word_crf"), ("ctx_plain_aks_heads", "word_crf"), ("c
               f"CI [{np.percentile(d, 2.5):+.2f}, {np.percentile(d, 97.5):+.2f}] p={np.mean(d >= 0):.3f}")
 
 
-# ---------------------------------------------------------------- Stage 3b: byt5-base vs byt5-small (seeds 13 and 42 only)
 for s in (13, 42):
     ids, E[("ctx_plain_aks_heads_byt5-base", s)] = comment_errors("ctx_plain_aks_heads_byt5-base", s)
 for a, b in [("ctx_plain_aks_heads_byt5-base", "ctx_plain_aks_heads"), ("ctx_plain_aks_heads_byt5-base", "word_crf")]:

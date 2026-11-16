@@ -1,11 +1,3 @@
-"""Rescore the official MultiLexNorm 2021 submissions on the code-switched test sets (published rows of Table 7).
-
-Needs a MultiLexNorm checkout (https://bitbucket.org/robvanderg/multilexnorm, commit e58e946375299a04355fa2d7fa9e1c769234e68a)
-and the converted gold in results/gpu/nb9_multilexnorm/mln_{iden,trde}.csv. ERR uses the official formula (case-sensitive),
-exactly as analysis/analyze_mln.py does for the systems trained here.
-
-Run from the repo root:  python analysis/score_mln_submissions.py --repo <multilexnorm checkout>
-"""
 import argparse, glob, json, os, unicodedata
 import pandas as pd
 

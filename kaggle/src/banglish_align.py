@@ -1,20 +1,6 @@
-"""Monotonic source-token -> target-span aligner for BanglaMix.
-
-93.4% of comments have one target word per source token. The rest differ by a few words: a glued token
-("Bhaiনাকি") becomes two target words, or punctuation is attached to the previous word ("back ." -> "ব্যাক।").
-Word-level models drop these comments from training, which removes ~19% of all ENG/ROM training tokens
-(they are long, Latin-heavy comments). This module aligns them so every comment yields one target span per
-source token.
-
-A span may hold several words ("ভাই নাকি") or start with GLUE, meaning "attach to the previous output
-without a space" (the "." of "back ." gets GLUE + "।"). `join_spans` turns spans back into a string, so
-join_spans(align(...)) == the original target for every comment (checked by `selftest`).
-
-Pure Python, no dependencies; costs come from a coarse phonetic skeleton shared by Latin and Bengali script.
-"""
 import unicodedata
 
-GLUE = "\x02"   # span prefix: attach to the previous span without a space (not whitespace to str.split)
+GLUE = "\x02"
 
 _BN = {}
 for chars, v in [("কখগঘ", "k"), ("চছ", "k"), ("জঝয", "j"), ("টঠতথৎ", "t"), ("ডঢদধ", "d"),
@@ -26,8 +12,7 @@ for chars, v in [("কখগঘ", "k"), ("চছ", "k"), ("জঝয", "j"), ("�
 for i, ch in enumerate("০১২৩৪৫৬৭৮৯"):
     _BN[ch] = str(i)
 _LAT = {**{c: "" for c in "aeiouwyh"}, **{c: "k" for c in "ckq"}, "x": "ks", "z": "j", "v": "b", "f": "p",
-        "g": "k"}  # g~k: voicing is unreliable in casual spelling; coarse classes only need to rank alignments
-
+        "g": "k"}
 
 
 def skeleton(s):
@@ -42,7 +27,7 @@ def skeleton(s):
         else:
             out.append(ch)
     s = "".join(out)
-    return "".join(c for i, c in enumerate(s) if i == 0 or c != s[i - 1])   # collapse repeats
+    return "".join(c for i, c in enumerate(s) if i == 0 or c != s[i - 1])
 
 
 def _lev(a, b):
@@ -62,7 +47,6 @@ def _is_symbolic(w):
 
 
 class Aligner:
-    """lexicon: optional {(source_word_lower, target_word)} pairs seen in aligned training comments."""
 
     def __init__(self, lexicon=None):
         self.lex = lexicon or set()
@@ -74,7 +58,6 @@ class Aligner:
         return self._sk[s]
 
     def tok_cost(self, src, tgt):
-        """0 = perfect match, ~1 = unrelated."""
         if not tgt:
             return 0.35 if _is_symbolic(src) else 1.0
         if (src.lower(), tgt) in self.lex or src == tgt:
@@ -85,7 +68,6 @@ class Aligner:
         return _lev(a, b) / max(len(a), len(b))
 
     def align(self, src, tgt):
-        """src: list of source tokens, tgt: list of target words -> (spans, mean cost per source token)."""
         n, m = len(src), len(tgt)
         INF = float("inf")
         D = [[INF] * (m + 1) for _ in range(n + 1)]
@@ -96,7 +78,6 @@ class Aligner:
                 if D[i][j] == INF:
                     continue
                 base = D[i][j]
-                # one source token -> b target words (b = 0..3)
                 if i < n:
                     for b in range(0, 4):
                         if j + b > m:
@@ -105,7 +86,6 @@ class Aligner:
                         c = base + self.tok_cost(src[i], span) + (0.0 if b == 1 else 0.25 * abs(b - 1))
                         if c < D[i + 1][j + b]:
                             D[i + 1][j + b], B[i + 1][j + b] = c, ("split", 1, b, None)
-                # a source tokens (a = 2..3) -> one target word, split inside the word
                 if j < m:
                     w = tgt[j]
                     for a in (2, 3):
@@ -125,7 +105,7 @@ class Aligner:
             else:
                 parts = [tgt[j - 1][s:e] for s, e in zip((0,) + cut, cut + (len(tgt[j - 1]),))]
                 out, started = [], False
-                for p in parts:                    # first non-empty part opens the word, later ones glue on
+                for p in parts:
                     out.append("" if not p else (GLUE + p if started else p))
                     started = started or bool(p)
                 spans += out[::-1]
@@ -133,12 +113,11 @@ class Aligner:
         return spans[::-1], D[n][m] / max(1, n)
 
     def _best_cuts(self, srcs, w):
-        """Split target word w into len(srcs) contiguous parts (empty parts allowed) at minimum cost."""
         L = len(w)
         if len(srcs) == 2:
             cands = [(k,) for k in range(L + 1)]
         else:
-            step = max(1, L // 12)                     # keep the 3-way search small for long words
+            step = max(1, L // 12)
             cands = [(k1, k2) for k1 in range(0, L + 1, step) for k2 in range(k1, L + 1, step)]
         best, arg = float("inf"), None
         for cut in cands:

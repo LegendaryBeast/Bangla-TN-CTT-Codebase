@@ -1,43 +1,9 @@
-# %% [markdown]
-# # BanglaMix — Reviewer baseline: UFAL-style per-word re-encoding vs. CTT
-# **Why this notebook.** The paper claims that CTT is cheaper than UFAL-style normalization (Samuel & Straka, 2021),
-# which re-encodes the whole sentence once *per word* with marker tokens around that word: O(N·L) encoder work for an
-# N-word chunk of length L, against O(L) for CTT. Reviewers will ask for this baseline, measured, not argued.
-#
-# **What runs** (all in the same `ctt.py` code base, so splits, aligner, metrics and the repetition guard are identical):
-#
-# | variant | what it is | why |
-# |---|---|---|
-# | `ufal_plain` | `--mode ufal`: chunk re-encoded once per word, target word wrapped in two marker tokens, no focus vector | the baseline; compare with `ctx_plain` (same settings, single encoder pass + focus vector) |
-# | `ctx_plain_rerun` | `ctx_plain` again (seed 42) with end-to-end timing | timing on the same Kaggle hardware/code; also a reproducibility check (Stage 1 raw CER 3.64) |
-#
-# Every run also uses `--save_val 1`: after training it decodes the **full validation split** and reports CER with
-# and without the repetition guard. That answers the second reviewer point (the guard was designed on test outputs).
-#
-# **New efficiency fields** in `result_*.json → efficiency`: `enc_seconds`, `encoder_bytes`, and
-# `total_words_per_sec` (encoder + generation). The old `words_per_sec` counts generation only, which hides the
-# cost UFAL adds.
-#
-# ### How to run (Kaggle)
-# 1. Attach the same Kaggle dataset as nb5 (`kaggle/kaggle_dataset.zip`: BanglaMix.csv, splits, CRF predictions).
-# 2. Settings: **GPU T4 x2**, **Internet ON** (downloads ByT5-small).
-# 3. `ufal_plain` encodes ~10× more bytes than CTT, so expect roughly 3–6 h per split (check the first epoch's
-#    `train_min` in the log and multiply by `EPOCHS`). Two versions keep each session under the 12 h limit:
-#    - **Version 1:** `RUNS = {"ufal_plain": [42, 13]}` (default below; one job per GPU)
-#    - **Version 2:** `RUNS = {"ufal_plain": [2026], "ctx_plain_rerun": [42]}`
-# 4. *Save Version → Save & Run All*. Download the whole `/kaggle/working/ctt` folder from each version and put the contents of both
-#    into `results/gpu/nb6_ufal/` (files directly, no `ctt/` subfolder). Then run locally:
-#    `python analysis/analyze_ufal.py`.
-
 # %%
 !pip -q install rapidfuzz 2>/dev/null
 
 # %% writefile banglish_align.py
 
 # %% writefile ctt.py
-
-# %% [markdown]
-# ## Configuration
 
 # %%
 import glob, json, os, subprocess, sys, time
@@ -51,22 +17,15 @@ BASE_ARGS = ["--batch_words", "48", "--accum", "2", "--max_chunks", "8", "--gen_
 POLL_SECONDS = 120
 
 VARIANTS = {
-    # UFAL-style: one example per word, so a micro-batch is capped by padded encoder bytes; 4096 keeps ~24 examples
-    # per micro-batch on a T4 (ctt.py halves a batch that runs out of memory and retries).
     "ufal_plain":      dict(cfg=dict(mode="ufal", align=1, save_val=1), extra=["--max_enc_tokens", "4096"]),
     "ctx_plain_rerun": dict(cfg=dict(mode="focus", align=1, save_val=1), extra=[]),
 }
-# Version 1 (default) / Version 2: see the instructions above.
 RUNS = {"ufal_plain": [42, 13]}
-# RUNS = {"ufal_plain": [2026], "ctx_plain_rerun": [42]}
 
 JOBS = [dict(variant=v, seed=s, **VARIANTS[v]) for v, ss in RUNS.items() for s in ss]
 os.makedirs(OUT, exist_ok=True)
-JOBS = [j for j in JOBS if not os.path.exists(f"{OUT}/result_{j['variant']}_s{j['seed']}.json")]   # resume-safe
+JOBS = [j for j in JOBS if not os.path.exists(f"{OUT}/result_{j['variant']}_s{j['seed']}.json")]
 print(len(JOBS), "jobs:", [f"{j['variant']}/s{j['seed']}" for j in JOBS])
-
-# %% [markdown]
-# ## Run jobs (one per GPU at a time)
 
 # %%
 n_gpu = max(1, torch.cuda.device_count())
@@ -106,11 +65,6 @@ while queue or running:
             del running[g]
         else:
             print(f"[{(time.time() - t0) / 60:6.1f} min] gpu{g} {tail(j)}")
-
-# %% [markdown]
-# ## Results in this session
-# CER includes the repetition guard in the `free+guard` rows (the paper reports guarded CER).
-# `total_words_per_sec` is the end-to-end throughput to compare with CTT; `encoder_bytes` shows the extra encoder work.
 
 # %%
 rows, eff, val = [], [], []

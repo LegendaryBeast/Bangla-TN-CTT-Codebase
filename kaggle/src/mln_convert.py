@@ -1,22 +1,6 @@
-"""Convert MultiLexNorm (W-NUT 2021) code-switched data into the CSV format ctt.py reads (nb9).
-
-MultiLexNorm files (data/<lang>/{train,dev,test}.norm): one token per line, "raw<TAB>normalization", empty line between
-sentences; a 1-n split has a space in the normalization, an n-1 merge leaves the later tokens' normalization empty.
-Every token therefore has exactly one target span, so the conversion keeps those spans (column `target_spans`, JSON)
-and ctt.py uses them directly instead of its aligner.
-
-Output per language, in <out>/<code>/:
-  mln.csv                     id, token_labels ("tok/UNK ..."; MultiLexNorm has no language tags), bengali_transliteration
-                              (the joined reference; ctt.py's column name), target_spans
-  split_seed{13,42,2026}.csv  the SAME official split three times, so --seed only changes the training seed
-Validation: the official dev file when there is one (Indonesian-English); Turkish-German has none, so a fixed 10% of
-its training sentences (random seed 0) is held out for epoch selection.
-
-Usage: python mln_convert.py --repo <multilexnorm checkout> --out <dir> [--langs iden trde]
-"""
 import argparse, json, os, random
 
-LANGS = {"iden": "ind_eng", "trde": "tur_deu"}   # code -> data folder in the MultiLexNorm repository
+LANGS = {"iden": "ind_eng", "trde": "tur_deu"}
 
 
 def load(path):

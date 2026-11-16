@@ -1,18 +1,3 @@
-"""Scores the controlled systems against the silver and the adjudicated references of the 600-comment subset.
-
-  python annotation/adjudicated_test/evaluate.py --agreed results/full_agreed.csv \
-         --adjudication results/full_adjudication_done.xlsx --out annotation/adjudicated_test/results/final
-
-Three references per comment:
-  silver       the BanglaMix reference (as in the article);
-  adjudicated  the adjudicated final target of every token, joined;
-  variants     the adjudicated reference in which each token's target is replaced by the accepted form that matches
-               the system's output for that token, if any (so any accepted spelling counts as correct).
-Systems (split 42, saved test outputs): word_crf; matched word level, context-only CTT, and CTT (three training runs
-each); ÚFAL-style re-encoding (one run); CTT with the copy gate (three runs; per-token copy decisions recovered from
-the saved copy-gate texts). Reports CER, WER, EM for all / code-mixed / monolingual comments, two-sided paired
-randomization tests (10,000 permutations), and how often the silver target was changed.
-"""
 import argparse, json, os
 import numpy as np, pandas as pd
 from rapidfuzz.distance import Levenshtein
@@ -51,15 +36,11 @@ byc = {c: g for c, g in K.groupby("comment_id", sort=False)}
 silver_ref = dict(zip(C.comment_id, C.silver_reference))
 adj_ref = {c: join_spans(list(g.final)) for c, g in byc.items()}
 
-# ---------------------------------------------------------------- system outputs (per-token spans)
 def load(p):
     return json.load(open(os.path.join(G, p), encoding="utf-8"))
 
 
 def copy_spans(free, text, src):
-    """Per-token outputs with the copy gate: each token is either its free-decoding output or a copy of the source
-    (with or without Bengali digits); the choice is recovered by matching the saved copy-gate text character by
-    character, with the same joining rule as join_spans (GLUE spans attach without a space)."""
     from common import GLUE
     digits = str.maketrans("0123456789", "০১২৩৪৫৬৭৮৯")
     target = " ".join(text.split())
@@ -104,12 +85,12 @@ COPY_TEXT = ["nb5_ctt/stage2_three_splits/test_text_ctx_plain_aks_heads_s42_copy
 OUT = {k: [load(p) for p in v] for k, v in RUNS.items()}
 src = {c: list(g.source_token) for c, g in byc.items()}
 cp_runs, unmatched = [], 0
-HYP = {}          # (system, run) -> {comment: hypothesis text} where per-token spans cannot be recovered
+HYP = {}
 for r_i, (free, tp) in enumerate(zip(OUT["CTT"], COPY_TEXT)):
     tx = load(tp); run = {}
     for c in comments:
         s = copy_spans(free[c], tx[c], src[c])
-        if s is None:          # a repeat-loop word decoded to a different length: score the saved text itself
+        if s is None:
             unmatched += 1; s = free[c]
             HYP.setdefault(("CTT, copy gate", r_i), {})[c] = " ".join(tx[c].split())
         run[c] = s
@@ -118,7 +99,6 @@ OUT["CTT, copy gate"] = cp_runs
 
 
 def scores(spans, override=None):
-    """Per-comment (char errors, ref chars, word errors, ref words, exact) for the three references."""
     rows = []
     for c in comments:
         sp = spans[c]; hyp = (override or {}).get(c) or join_spans(sp)

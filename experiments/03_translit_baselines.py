@@ -1,9 +1,3 @@
-"""Bengali-script normalisation (back-transliteration) baselines that run on CPU.
-
-All systems are token-level and output the space-joined sequence, scored against the full
-normalised bengali_transliteration of every test comment (aligned or not).
-Token-level accuracy is reported on the 93% of comments whose target is token-aligned.
-"""
 import difflib
 import json
 import os
@@ -23,7 +17,6 @@ def key(w):
 
 
 class Lexicon:
-    """Most-frequent-target lookup, optionally keyed on the LID tag, with fuzzy fallback for OOV words."""
 
     def __init__(self, train, by_label, fuzzy):
         self.by_label, self.fuzzy = by_label, fuzzy

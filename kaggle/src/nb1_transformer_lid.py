@@ -1,15 +1,3 @@
-# %% [markdown]
-# # BanglaMix — Transformer token-level LID (Kaggle, GPU)
-# Fine-tunes multilingual / Bangla encoders for 5-way token LID on the **same duplicate-aware splits**
-# used by the local classical baselines (`splits/split_seed{13,42,2026}.csv`).
-#
-# **Setup:** Accelerator = GPU T4 x2 (or P100), Internet = ON. Attach the Kaggle dataset you created from
-# the Kaggle dataset `kaggle/kaggle_dataset.zip` (it contains `BanglaMix.csv`, `splits/`, `noise_matrix.csv`).
-#
-# Loss variants: `ce` (cross-entropy), `ls` (label smoothing 0.1), `gce` (generalised CE, q=0.7),
-# `fc` (forward loss correction with the confident-learning noise matrix).
-# Runtime on a T4: about 4–7 min per (model, seed, loss) for base-size models.
-
 # %%
 !pip -q install seqeval==1.2.2 2>/dev/null
 !pip -q install git+https://github.com/csebuetnlp/normalizer 2>/dev/null || echo "normalizer optional"
@@ -33,10 +21,6 @@ L2I = {l: i for i, l in enumerate(LABELS)}
 DEV = "cuda" if torch.cuda.is_available() else "cpu"
 print(DATA, SPLITS, DEV)
 
-# %% [markdown]
-# ## Configuration — edit here
-# Start with one model + seed 42 to check everything works, then widen the grid.
-
 # %%
 MODELS = [
     "xlm-roberta-base",
@@ -44,12 +28,11 @@ MODELS = [
     "csebuetnlp/banglabert",
     "google/muril-base-cased",
     "bert-base-multilingual-cased",
-    # "xlm-roberta-large",   # ~3x slower; uses the HP override below. Architecture search: run it alone first.
 ]
 SEEDS = [13, 42, 2026]
-LOSSES = ["ce"]            # add "ls", "gce", "fc" for the noise-robust training study
+LOSSES = ["ce"]
 EPOCHS, LR, BS, MAX_WORDS, MAX_LEN = 5, 3e-5, 16, 64, 256
-HP = {"xlm-roberta-large": dict(lr=1e-5, bs=8)}   # per-model overrides of LR / BS
+HP = {"xlm-roberta-large": dict(lr=1e-5, bs=8)}
 
 # %%
 df = pd.read_csv(DATA)
@@ -110,7 +93,7 @@ def collate(batch, pad_id):
 T_noise = None
 try:
     T_noise = torch.tensor(pd.read_csv(find("noise_matrix.csv"), index_col=0).values, dtype=torch.float)
-    T_noise = 0.95 * T_noise + 0.05 * torch.eye(5)   # keep it invertible / well-conditioned
+    T_noise = 0.95 * T_noise + 0.05 * torch.eye(5)
 except AssertionError:
     print("noise_matrix.csv not found: 'fc' loss unavailable")
 
@@ -124,17 +107,16 @@ def loss_fn(logits, labels, kind):
     if kind == "gce":
         p = F.softmax(lg, -1).gather(1, y[:, None]).squeeze(1).clamp_min(1e-7)
         return ((1 - p ** 0.7) / 0.7).mean()
-    if kind == "fc":   # p(observed) = p(clean) @ T, T[i,j] = P(obs=j | true=i)
+    if kind == "fc":
         p = F.softmax(lg, -1) @ T_noise.to(lg.device)
         return F.nll_loss(torch.log(p.clamp_min(1e-7)), y)
     raise ValueError(kind)
 
 @torch.no_grad()
 def predict(model, items, pad_id, with_probs=False):
-    """Word tags per comment (first sub-word); with_probs also returns the word-level softmax for ensembling."""
     model.eval()
     out, outp = {}, {}
-    fallback = [0.0, 0.0, 0.0, 1.0, 0.0]                  # OTHER, for a word that got zero sub-tokens
+    fallback = [0.0, 0.0, 0.0, 1.0, 0.0]
     for i in range(0, len(items), 64):
         b = items[i:i + 64]
         ids, att, _ = collate(b, pad_id)
@@ -202,7 +184,7 @@ def run(model_name, seed, loss_kind):
     s.update(model=model_name, seed=seed, loss=loss_kind, val_MacroF1=best)
     tag = f"{model_name.replace('/', '_')}_s{seed}_{loss_kind}"
     json.dump({c: pt[c] for c in te.id}, open(f"{OUT}/lid_test_pred_{tag}.json", "w"))
-    json.dump({c: pp[c] for c in te.id}, open(f"{OUT}/lid_test_prob_{tag}.json", "w"))   # for the nb5 LID ensemble
+    json.dump({c: pp[c] for c in te.id}, open(f"{OUT}/lid_test_prob_{tag}.json", "w"))
     del model; torch.cuda.empty_cache()
     return s
 
@@ -216,7 +198,7 @@ for m in MODELS:
             print(m, seed, loss_kind)
             try:
                 s = run(m, seed, loss_kind)
-            except Exception as ex:          # keep the grid going if one checkpoint fails to load
+            except Exception as ex:
                 print("FAILED", m, ex); continue
             s["minutes"] = (time.time() - t) / 60
             rows.append(s)

@@ -1,18 +1,17 @@
-"""Shared helpers for the adjudicated-test scripts: reading sheets and normalizing targets."""
 import os, sys, unicodedata
 import pandas as pd
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, os.path.join(ROOT, "kaggle", "src"))
-from banglish_align import GLUE, join_spans  # noqa: E402,F401
+from banglish_align import GLUE, join_spans
 
 GLUE_MARK = "~"
-EMPTY = "<empty>"          # explicit empty target in the adjudication sheet
+EMPTY = "<empty>"
 NUKTA = {"ড়": "ড়", "ঢ়": "ঢ়", "য়": "য়"}
 
 
-def bn(s):                 # identical to analysis/review_analyses.py
+def bn(s):
     s = unicodedata.normalize("NFC", s)
     for k, v in NUKTA.items():
         s = s.replace(k, v)
@@ -20,7 +19,6 @@ def bn(s):                 # identical to analysis/review_analyses.py
 
 
 def norm_target(x):
-    """Sheet cell -> internal target: NFC, single spaces, leading ~ -> GLUE, '<empty>' -> ''."""
     x = "" if x is None or (isinstance(x, float) and x != x) else str(x)
     x = " ".join(bn(x).split())
     if x == EMPTY:
@@ -53,7 +51,6 @@ def sample_key():
 
 
 def read_sheet(path):
-    """Annotator sheet -> DataFrame indexed by item_id with target (str) and variants (list)."""
     s = pd.read_excel(path, sheet_name="tokens", dtype=str, keep_default_na=False)
     need = {"item_id", "corrected_target", "acceptable_variants", "flag", "notes"}
     missing = need - set(s.columns)

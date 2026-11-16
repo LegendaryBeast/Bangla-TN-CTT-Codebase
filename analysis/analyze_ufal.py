@@ -1,24 +1,14 @@
-"""Compare the UFAL-style per-word re-encoding baseline (nb6) with CTT, after the nb6 outputs are downloaded.
-
-Each Kaggle version's `ctt/` output folder goes into its own results/gpu/nb6_ufal/run*/ folder, then run
-from the repo root:
-    python analysis/analyze_ufal.py
-Prints, per split and pooled: guarded CER/WER/EM, paired comment-clustered bootstrap tests on guarded outputs
-(same procedure as repetition_guard.py), end-to-end throughput, and the repetition guard on validation outputs.
-
-Generic use (any two systems with saved test spans):  python analysis/analyze_ufal.py --a ctx_plain_aks_heads --b ctx_plain
-"""
 import argparse, glob, json, os, re, sys, unicodedata
 import numpy as np, pandas as pd
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "kaggle", "src"))
-from banglish_align import join_spans  # noqa: E402
+from banglish_align import join_spans
 
 try:
     from rapidfuzz.distance import Levenshtein
     lev = Levenshtein.distance
-except ImportError:                                            # slower pure-Python fallback
+except ImportError:
     def lev(a, b):
         if a == b:
             return 0
@@ -40,7 +30,7 @@ ap.add_argument("--n_boot", type=int, default=2000)
 args = ap.parse_args()
 
 GPU = os.path.join(ROOT, "results", "gpu")
-NB6 = sorted(glob.glob(os.path.join(GPU, "nb6_ufal", "run*")))   # run1_ufal_s42_s13, run2_ufal_s2026_ctxplain_s42
+NB6 = sorted(glob.glob(os.path.join(GPU, "nb6_ufal", "run*")))
 DIRS = NB6 + [os.path.join(GPU, "nb5_ctt", d) for d in
                                           ("stage1_seed42", "stage2_three_splits", "stage3a_8_epochs", "stage3b_byt5_base")]
 NUKTA = {"ড়": "ড়", "ঢ়": "ঢ়", "য়": "য়"}
@@ -58,7 +48,7 @@ def max_run(s):
     return max([len(m.group(0)) // len(m.group(1)) for m in RUN.finditer(s)] or [1])
 
 
-def guard(span, src):   # identical to rep_guard in ctt.py and repetition_guard.py
+def guard(span, src):
     allowed = max(3, max_run(bn(src).lower()) + 2)
     return RUN.sub(lambda m: m.group(1) * min(allowed, len(m.group(0)) // len(m.group(1)))
                    + m.group(0)[len(m.group(0)) // len(m.group(1)) * len(m.group(1)):], span)
@@ -115,7 +105,7 @@ for b in args.b:
     for seeds in [[s] for s in args.seeds] + ([args.seeds] if len(args.seeds) > 1 else []):
         pooled = len(seeds) > 1
         seeds = [s for s in seeds if E[(args.a, s)] is not None and E[(b, s)] is not None]
-        if not seeds or (pooled and len(seeds) < 2):   # nothing to pool beyond the single split already shown
+        if not seeds or (pooled and len(seeds) < 2):
             continue
         for s in seeds:
             assert E[(args.a, s)]["ids"] == E[(b, s)]["ids"], f"different test comments for split {s}"

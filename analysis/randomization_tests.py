@@ -1,19 +1,10 @@
-"""Paired approximate randomization tests (two-sided) on saved predictions; no new training.
-
-For every comparison of two systems on the same test comments, the outputs of the two systems are swapped
-independently per comment (per comment and run when runs are pooled) under the null hypothesis that they are
-exchangeable; the p-value is (#{|d*| >= |d|} + 1) / (R + 1). Also recomputes the LID-tag ablation without the
-repetition guard, and CER/WER/EM of the three split-42 training runs.
-
-Run from the repo root:  python analysis/randomization_tests.py
-"""
 import contextlib, glob, io, json, os, pickle, sys
 import numpy as np, pandas as pd
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "analysis")); sys.argv = sys.argv[:1]
 with contextlib.redirect_stdout(io.StringIO()):
-    import review_analyses as RA          # loaders, guard, join_spans, bn, references
+    import review_analyses as RA
 from rapidfuzz.distance import Levenshtein
 from sklearn.metrics import f1_score
 
@@ -44,7 +35,6 @@ def text_errors(path, ids):
 
 
 def rand_test(pairs):
-    """pairs: list of (errA, errB, len) arrays, one per run/split; returns dCER, two-sided p."""
     e = np.concatenate([a - b for a, b, _ in pairs]).astype(float); L = sum(l.sum() for _, _, l in pairs)
     d = 100 * e.sum() / L
     signs = rng.choice([-1.0, 1.0], size=(R_ITER, len(e)))
@@ -66,7 +56,6 @@ for a, b in [("ctx_plain_aks_heads", "word_crf"), ("ctx_plain", "word_crf"), ("c
     show(f"{a} vs {b}", [(E[(a, s)]["ce"], E[(b, s)]["ce"], E[(a, s)]["ln"]) for s in S])
 CP = {s: text_errors(f"nb5_ctt/{'stage1_seed42' if os.path.exists(os.path.join(G, 'nb5_ctt/stage1_seed42', f'test_text_ctx_plain_aks_heads_s{s}_copy.json')) else 'stage2_three_splits'}/test_text_ctx_plain_aks_heads_s{s}_copy.json", RA.TEST[s]) for s in S}
 FR = {s: text_errors(f"nb5_ctt/{'stage1_seed42' if os.path.exists(os.path.join(G, 'nb5_ctt/stage1_seed42', f'test_text_ctx_plain_aks_heads_s{s}_free.json')) else 'stage2_three_splits'}/test_text_ctx_plain_aks_heads_s{s}_free.json", RA.TEST[s]) for s in S}
-# both sides read from the saved decoded texts (free text equals the joined spans except 2 comments of split 2026)
 show("copy gate vs free decoding (CTT)", [(CP[s]["ce"], FR[s]["ce"], CP[s]["ln"]) for s in S])
 
 E8 = {s: comment_errors(spans_file(f"nb5_ctt/stage3a_8_epochs/test_spans_ctx_plain_aks_heads_e8_s{s}.json"), RA.TEST[s]) for s in S}
@@ -86,7 +75,7 @@ runs = {"CTT": ["nb5_ctt/stage2_three_splits/test_spans_ctx_plain_aks_heads_s42.
 RE = {k: [comment_errors(spans_file(p), ids42) for p in v] for k, v in runs.items()}
 for a, b in [("CTT", "word"), ("ctx", "word"), ("CTT", "ctx")]:
     show(f"{a} vs {b} (3 runs)", [(x["ce"], y["ce"], x["ln"]) for x, y in zip(RE[a], RE[b])])
-for a, b in [("CTT", "word"), ("ctx", "word")]:   # WER and EM differences, same permutation scheme
+for a, b in [("CTT", "word"), ("ctx", "word")]:
     e = np.concatenate([x["we"] - y["we"] for x, y in zip(RE[a], RE[b])]).astype(float); W = sum(x["wn"].sum() for x in RE[a])
     d = 100 * e.sum() / W; null = 100 * (rng.choice([-1.0, 1.0], size=(R_ITER, len(e))) @ e) / W
     print(f"  {a} vs {b} (3 runs) dWER {d:+.2f}  p(two-sided) = {(np.sum(np.abs(null) >= abs(d) - 1e-12) + 1) / (R_ITER + 1):.4f}")

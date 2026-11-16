@@ -1,19 +1,9 @@
-"""Analyses that need no new training (existing test spans only).
-
-  A. Unguarded vs guarded CER for the systems in the CTT code base, and paired comment-clustered bootstrap tests
-     on both (does any conclusion depend on the repetition guard?).
-  B. Chunking: how often the 160-byte chunks cut a comment, token accuracy for words next to a chunk boundary vs
-     elsewhere, and CER by comment length.
-  C. Automatic taxonomy of CTT's token errors (same rules as analysis/nb7_ctt_error_analysis.ipynb, Part 1).
-
-Run from the repo root:  python analysis/review_analyses.py
-"""
 import glob, json, os, re, sys, unicodedata
 import numpy as np, pandas as pd
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "kaggle", "src"))
-from banglish_align import join_spans  # noqa: E402
+from banglish_align import join_spans
 
 try:
     from rapidfuzz.distance import Levenshtein
@@ -53,13 +43,13 @@ def max_run(s):
     return max([len(m.group(0)) // len(m.group(1)) for m in RUN.finditer(s)] or [1])
 
 
-def guard(span, src):   # identical to rep_guard in kaggle/src/ctt.py
+def guard(span, src):
     allowed = max(3, max_run(bn(src).lower()) + 2)
     return RUN.sub(lambda m: m.group(1) * min(allowed, len(m.group(0)) // len(m.group(1)))
                    + m.group(0)[len(m.group(0)) // len(m.group(1)) * len(m.group(1)):], span)
 
 
-def chunk_words(words, budget):   # identical to kaggle/src/ctt.py
+def chunk_words(words, budget):
     chunks, cur, size = [], [], 0
     for i, w in enumerate(words):
         b = len(w.encode("utf-8")) + (1 if cur else 0)
@@ -138,7 +128,7 @@ for s in SEEDS:
     for c in TEST[s]:
         toks, labels, ref = df.at[c, "tokens"], df.at[c, "labels"], df.at[c, "ref"].split()
         if len(toks) != len(ref):
-            continue                                   # token accuracy on aligned comments, as in Table 4
+            continue
         ch = chunk_words(toks, BUDGET)
         where = {}
         for k, idx in enumerate(ch):

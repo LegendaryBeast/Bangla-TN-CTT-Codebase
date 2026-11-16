@@ -1,12 +1,3 @@
-# %% [markdown]
-# # BanglaMix — Open LLM few-shot baseline (Kaggle, GPU)
-# Reviewers in 2026 will ask "why not just prompt an LLM?". This notebook answers it on a fixed random
-# subset of the seed-42 test split, for both tasks (token LID and Bengali-script normalisation),
-# and scores the local CRF on the **same subset** for a fair comparison.
-#
-# **Setup:** GPU T4 x2, Internet ON, attach the Kaggle dataset built from `kaggle/kaggle_dataset.zip`. 4-bit loading via bitsandbytes.
-# ~60–90 min for 300 comments with a 7–8B model.
-
 # %%
 !pip -q install -U bitsandbytes accelerate rapidfuzz 2>/dev/null
 
@@ -22,7 +13,7 @@ def find(name):
     assert hits, f"{name} not found"
     return hits[0]
 
-MODEL = "Qwen/Qwen2.5-7B-Instruct"   # or e.g. "meta-llama/Llama-3.1-8B-Instruct" (gated), "google/gemma-2-9b-it"
+MODEL = "Qwen/Qwen2.5-7B-Instruct"
 N_TEST, K_SHOT, SEED, BS = 300, 8, 42, 8
 LABELS = ["BAN", "ENG", "ROM_BAN", "OTHER", "UNK"]
 OUT = "/kaggle/working"
@@ -44,7 +35,6 @@ crf = json.load(open(find(f"crf_pred_seed{SEED}.json")))
 
 tr = df[df.split == "train"]
 te = df[(df.split == "test") & (df.tokens.map(len) <= 40)].sample(N_TEST, random_state=0)
-# k-shot demos: one or two per code-mix type, short comments only
 shots = (tr[tr.tokens.map(len).between(4, 14)].groupby("code_mix_type", group_keys=False)
          .apply(lambda g: g.sample(1, random_state=0)).head(K_SHOT))
 
@@ -123,5 +113,5 @@ wer = 100 * sum(Levenshtein.distance(h.split(), r.split()) for h, r in zip(hyps,
 tr_res = pd.DataFrame([dict(system=f"{MODEL} {K_SHOT}-shot", CER=cer, WER=wer,
                             Exact=100 * np.mean([h == r for h, r in zip(hyps, refs)]))])
 lid_res.to_csv(f"{OUT}/llm_lid_results.csv", index=False); tr_res.to_csv(f"{OUT}/llm_translit_results.csv", index=False)
-te[["id"]].to_csv(f"{OUT}/llm_subset_ids.csv", index=False)   # so local lexicon/ByT5 systems can be scored on the same subset
+te[["id"]].to_csv(f"{OUT}/llm_subset_ids.csv", index=False)
 display(lid_res.round(2)); display(tr_res.round(2))

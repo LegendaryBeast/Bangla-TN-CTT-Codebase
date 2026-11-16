@@ -1,53 +1,9 @@
-# %% [markdown]
-# # BanglaMix — Architecture search: Context-aware Token Transducer (CTT)
-# **Goal:** one proposed model that beats every Table III baseline on CER, WER *and* EM at once
-# (best so far: ByT5-word + CRF tag, 5.17 CER; ByT5-sentence λ=0, 59.4 EM), and an LID head ≥ XLM-R (88.09).
-#
-# **Why a new architecture.** The sentence-level joint ByT5 decodes whole chunks freely, so it drifts (CER ±1.8
-# across seeds) and gating "helps" only by keeping the decoder away from Bengali spans. Word-level ByT5 is more
-# accurate but has no context and is trained only on token-aligned comments. Those discarded comments
-# hold 13–14% of reference characters and ~19% of all ENG/ROM tokens, which are the hard classes.
-#
-# **CTT** runs one byte-encoder pass per chunk (full context), then one short decoder pass per word, with that word's
-# bytes marked by a learned focus vector. The output is token-aligned by construction (so it cannot drift), the
-# decoder sees context, and an aligner recovers the unaligned comments.
-#
-# ### Stage 1 (seed 42, screening): each row changes one thing from the row above
-# | variant | what it tests |
-# |---|---|
-# | `word_crf` | reproduces the current best (word-level + CRF tag) under this harness |
-# | `word_crf_align` | + the 834 recovered unaligned comments |
-# | `ctx_crf` | + sentence context (focus decoding) |
-# | `ctx_plain` | context only, no LID at all (does LID still matter once context is there?) |
-# | `ctx_joint` | **proposed:** own LID head + soft posterior injection + learned copy gate (no external tagger) |
-# | `ctx_joint_aks` | + warm start on 200k Aksharantar pairs (targets the unseen Latin words, 39.5% of errors) |
-#
-# **Stage 1 result (seed 42):** `ctx_plain` won (CER 3.64 / WER 8.45 / EM 61.78; −0.83 CER vs `word_crf`, p<0.001).
-# Every form of LID conditioning *hurt* once context was available (ctx_crf +0.65, ctx_joint +0.79). Aksharantar
-# helped (ctx_joint_aks −0.42 vs ctx_joint, p=0.02). The learned copy gate skipped 51% of words at no CER cost; the LID
-# gate cost about 1.4 CER.
-#
-# ### Stage 2 (this configuration): confirm on all three splits
-# | variant | seeds | why |
-# |---|---|---|
-# | `ctx_plain_aks_heads` | 13, 42, 2026 | **candidate final model:** ctx_plain + Aksharantar warm start, with LID and copy heads on *detached* encoder states (LID output and copy-gate speed-up without affecting normalization) |
-# | `ctx_plain` | 13, 2026 | Stage-1 winner, completes 3 seeds (seed 42 comes from Stage 1) |
-# | `word_crf` | 13, 2026 | baseline, completes 3 seeds |
-#
-# **Setup:** GPU T4 x2, Internet ON (Aksharantar and ByT5 downloads), attach the Kaggle dataset built from `kaggle/kaggle_dataset.zip`.
-# Run with *Save Version → Save & Run All*. Jobs run one per GPU, and finished jobs are skipped on rerun.
-# The first log lines show minutes per epoch, so multiply by `EPOCHS` to plan. Expect about 1.5–2.5 h per
-# focus-mode job on a T4 (fp32) and much less for word mode.
-
 # %%
 !pip -q install rapidfuzz 2>/dev/null
 
 # %% writefile banglish_align.py
 
 # %% writefile ctt.py
-
-# %% [markdown]
-# ## Configuration
 
 # %%
 import glob, json, os, subprocess, sys, time
@@ -56,12 +12,10 @@ import numpy as np, pandas as pd, torch
 OUT = "/kaggle/working/ctt"
 SCRIPT = "/kaggle/working/ctt.py"
 EPOCHS = 5
-# byt5-small is the final backbone. Stage 3b tried "google/byt5-base": +0.15 CER (worse), 2x slower.
-# Any other MODEL gets the suffix "_<name>" in variant names and the half-size batch settings below.
 MODEL = "google/byt5-small"
 if MODEL == "google/byt5-small":
     EXTRA_ARGS = ["--batch_words", "48", "--accum", "2", "--max_chunks", "8", "--gen_bs", "48"]
-else:   # same 96 words per optimizer step, half-size micro-batches: fp32 weights + AdamW alone take ~9 GB
+else:
     EXTRA_ARGS = ["--batch_words", "24", "--accum", "4", "--max_chunks", "4", "--gen_bs", "32",
                   "--max_enc_tokens", "1024", "--max_dec_tokens", "1024"]
 POLL_SECONDS = 120
@@ -75,28 +29,16 @@ VARIANTS = {
     "ctx_joint":      dict(mode="focus", align=1, **JOINT),
     "ctx_joint_aks":  dict(mode="focus", align=1, pretrain_aksharantar=200000, **JOINT),
     "ctx_plain_aks_heads": dict(mode="focus", align=1, pretrain_aksharantar=200000, lam=0.4, copy_mu=0.5, detach_heads=1),
-    # Stage 3a: the proposed model trained longer (validation CER was still falling at epoch 5)
     "ctx_plain_aks_heads_e8": dict(mode="focus", align=1, pretrain_aksharantar=200000, lam=0.4, copy_mu=0.5, detach_heads=1, epochs=8),
 }
-# which variant runs on which seeds.
-#   Stage 1: {v: [42] for v in the first six}
-#   Stage 2: {"ctx_plain_aks_heads": [42, 13, 2026], "ctx_plain": [13, 2026], "word_crf": [13, 2026]}
-#   Stage 3a: {"ctx_plain_aks_heads_e8": [42, 13, 2026]}  (MODEL = byt5-small) -> no gain over 5 epochs
-#   Stage 3b: {"ctx_plain_aks_heads": [42, 13]}           (MODEL = byt5-base)  -> worse, slower
-# The search is finished; the proposed model is "ctx_plain_aks_heads" on byt5-small.
-# To reproduce it: RUNS = {"ctx_plain_aks_heads": [42, 13, 2026]}
 RUNS = {}
 SEEDS = sorted({s for ss in RUNS.values() for s in ss})
 suffix = "" if MODEL == "google/byt5-small" else "_" + MODEL.split("/")[-1]
 JOBS = [dict(variant=v + suffix, seed=s, cfg=VARIANTS[v]) for v, ss in RUNS.items() for s in ss]
-# longest first (Aksharantar warm start, then focus mode), so the two GPUs finish at about the same time
 JOBS.sort(key=lambda j: (-int("pretrain_aksharantar" in j["cfg"]), j["cfg"]["mode"] != "focus"))
 os.makedirs(OUT, exist_ok=True)
-JOBS = [j for j in JOBS if not os.path.exists(f"{OUT}/result_{j['variant']}_s{j['seed']}.json")]   # resume-safe
+JOBS = [j for j in JOBS if not os.path.exists(f"{OUT}/result_{j['variant']}_s{j['seed']}.json")]
 print(len(JOBS), "jobs:", [f"{j['variant']}/s{j['seed']}" for j in JOBS])
-
-# %% [markdown]
-# ## Run jobs (one per GPU at a time)
 
 # %%
 n_gpu = max(1, torch.cuda.device_count())
@@ -131,17 +73,11 @@ while queue or running:
             print(f"[{(time.time() - t0) / 60:6.1f} min] finished {j['variant']}/s{j['seed']} exit={proc.returncode}")
             if proc.returncode != 0:
                 text = open(logf.name).read()
-                print("\n".join(l for l in text.splitlines() if l.startswith("[")))   # progress lines: where it failed
+                print("\n".join(l for l in text.splitlines() if l.startswith("[")))
                 print(text[-1500:])
             del running[g]
         else:
             print(f"[{(time.time() - t0) / 60:6.1f} min] gpu{g} {tail(j)}")
-
-# %% [markdown]
-# ## Results vs. the paper's Table III
-# `free` = decode every word; `copy` = learned copy gate (words the copy head is ≥ τ sure about skip the decoder);
-# `lid` = the paper's gate (copy words tagged BAN/OTHER). Compare CER, WER and Exact together, because the goal is to
-# win all three.
 
 # %%
 PAPER = pd.DataFrame([
@@ -181,9 +117,6 @@ if len(eff):
 if len(lid):
     display(mean_std(lid, ["variant"], ["Acc", "MacroF1", "F1_ENG", "F1_ROM_BAN", "F1_UNK", "OOV_Acc"]))
 
-# %% [markdown]
-# ## Significance: paired, comment-clustered bootstrap on CER (same seed, free decoding)
-
 # %%
 import unicodedata
 from rapidfuzz.distance import Levenshtein
@@ -211,11 +144,6 @@ for s in SEEDS:
             if os.path.exists(f"{OUT}/test_text_{a + suffix}_s{s}_{mode}.json") and os.path.exists(f"{OUT}/test_text_word_crf_s{s}_free.json"):
                 print(paired_bootstrap(a + suffix, "word_crf", s, mode))
 
-# %% [markdown]
-# ## Optional: LID ensemble (CTT LID head + XLM-R)
-# Attach the nb1 output (it now saves `lid_test_prob_*.json`) as a second input. This averages word-level
-# posteriors. The two models make different errors (bytes vs. subwords), so the average can beat XLM-R alone.
-
 # %%
 LABELS = ["BAN", "ENG", "ROM_BAN", "OTHER", "UNK"]
 from sklearn.metrics import f1_score
@@ -237,4 +165,3 @@ for s in SEEDS:
                 P = w_ * np.array(X[c]) + (1 - w_) * np.array(C[c])
                 yt += gold_all[c]; yp += [LABELS[i] for i in P.argmax(-1)]
             print(f"seed {s} {os.path.basename(f)} w_xlmr={w_}: macro-F1 {100 * f1_score(yt, yp, labels=LABELS, average='macro'):.2f}")
-# Pick the weight on the validation split before reporting it; this cell is only a quick look at test.

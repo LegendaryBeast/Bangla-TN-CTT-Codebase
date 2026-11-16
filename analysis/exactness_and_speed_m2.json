@@ -1,0 +1,41 @@
+{
+ "device": "mps",
+ "torch": "2.14.0",
+ "weights": "ByT5-small architecture, random initialization (seed 0)",
+ "config": {
+  "d_model": 1472,
+  "d_ff": 3584,
+  "num_layers": 12,
+  "num_decoder_layers": 4,
+  "num_heads": 6,
+  "vocab_size": 384
+ },
+ "test_comments": 1261,
+ "chunks": 1607,
+ "words": 12184,
+ "encoder_bytes": {
+  "shared": 124364,
+  "reencode_output_marking": 1265262,
+  "reencode_input_markers": 1289630
+ },
+ "exactness": {
+  "chunks": 150,
+  "words": 1286,
+  "max_abs_state_diff": 0.0,
+  "max_abs_logit_diff": 0.0,
+  "identical_greedy_outputs": 1286
+ },
+ "encoder_seconds": {
+  "shared": [
+   37.36810874938965,
+   49.803945779800415,
+   46.37467813491821
+  ],
+  "reencode": [
+   448.81174993515015,
+   484.22616505622864,
+   491.7210831642151
+  ],
+  "ratio_mean": 10.66861741753798
+ }
+}

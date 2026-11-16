@@ -1,17 +1,3 @@
-"""Inter-annotator agreement and the adjudication sheet.
-
-  python annotation/adjudicated_test/agreement.py --a sheets/full_annotator_A_done.xlsx --b sheets/full_annotator_B_done.xlsx \
-         --out annotation/adjudicated_test/results/full
-
-Reports (on the items present in both sheets):
-  * Cohen's kappa on whether each token needs a change to its silver target (changed / unchanged);
-  * exact agreement on corrected_target; compatible agreement (one annotator's target is among the other's
-    accepted forms); agreement on the variant sets;
-  * comment-level agreement: identical references, and CER of B's reference against A's;
-  * change rates per annotator by LID tag and by code-mixed vs monolingual, and flag counts.
-Writes <out>_agreement.txt, <out>_agreed.csv (tokens final without adjudication) and <out>_adjudication.xlsx
-(every token on which the annotators differ in target, variants, or flag).
-"""
 import argparse, os
 import numpy as np, pandas as pd
 from openpyxl import Workbook
@@ -80,7 +66,6 @@ say(tab.to_string())
 say("\nflags: A " + str(A.flag[A.flag != ""].value_counts().to_dict()) + "; B " + str(B.flag[B.flag != ""].value_counts().to_dict()))
 open(args.out + "_agreement.txt", "w", encoding="utf-8").write("\n".join(lines) + "\n")
 
-# ---------------------------------------------------------------- agreed tokens and adjudication sheet
 need = (~exact) | (~same_set) | (A.flag != "").values | (B.flag != "").values
 agreed = pd.DataFrame({"item_id": np.array(items)[~need], "final_target": [show(t) for t in A.target[~need]],
                        "final_variants": ["|".join(show(x) for x in v) for v in A.variants[~need]]})

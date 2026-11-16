@@ -1,13 +1,3 @@
-"""CTT on MultiLexNorm code-switched data (nb9), after its outputs are in results/gpu/nb9_multilexnorm/.
-
-Prints per language (iden = Indonesian-English, trde = Turkish-German):
-  1. test ERR per system and training seed (official MultiLexNorm formula, case-sensitive), raw and with the
-     repetition guard, and mean +- std over seeds, next to ÚFAL's published test ERR;
-  2. paired sentence-clustered bootstrap (2,000 resamples, seeds pooled) of the ERR difference between systems;
-  3. cost of ÚFAL-style re-encoding relative to context-only CTT (encoder bytes, end-to-end speed, training time).
-
-Run from the repo root:  python analysis/analyze_mln.py [--dir results/gpu/nb9_multilexnorm]
-"""
 import argparse, glob, json, os, re, unicodedata
 import numpy as np, pandas as pd
 
@@ -17,7 +7,6 @@ ap.add_argument("--dir", default=os.path.join(ROOT, "results", "gpu", "nb9_multi
 ap.add_argument("--n_boot", type=int, default=2000)
 args = ap.parse_args()
 
-# ÚFAL's official test outputs (MultiLexNorm repository, submissions/ÚFAL-{1,2}), scored with the official formula
 PUBLISHED = {"iden": (66.15, 67.18), "trde": (68.19, 68.62)}
 NUKTA = {"ড়": "ড়", "ঢ়": "ঢ়", "য়": "য়"}
 RUN = re.compile(r"(.{1,4}?)\1+", re.S)
@@ -34,14 +23,13 @@ def max_run(s):
     return max([len(m.group(0)) // len(m.group(1)) for m in RUN.finditer(s)] or [1])
 
 
-def guard(span, src):   # identical to rep_guard in kaggle/src/ctt.py
+def guard(span, src):
     allowed = max(3, max_run(bn(src).lower()) + 2)
     return RUN.sub(lambda m: m.group(1) * min(allowed, len(m.group(0)) // len(m.group(1)))
                    + m.group(0)[len(m.group(0)) // len(m.group(1)) * len(m.group(1)):], span)
 
 
 def per_sentence(spans, data, guarded):
-    """Per test sentence: correct tokens, tokens, tokens the annotators changed."""
     cor, tot, chg = [], [], []
     for cid, toks, gold in data:
         if cid not in spans:
@@ -68,7 +56,7 @@ for lang in ("iden", "trde"):
     d = pd.read_csv(csv, keep_default_na=False)
     d = d[d.id.str.startswith(f"{lang}_test_")]
     data = [(c, [t.rsplit("/", 1)[0] for t in tl.split(" ")], json.loads(s)) for c, tl, s in zip(d.id, d.token_labels, d.target_spans)]
-    S = {}                                   # (system, seed) -> spans
+    S = {}
     for f in sorted(glob.glob(os.path.join(args.dir, f"test_spans_{lang}_*_s*.json"))):
         name, seed = os.path.basename(f)[len("test_spans_"):-len(".json")].rsplit("_s", 1)
         S[(name[len(lang) + 1:], int(seed))] = json.load(open(f, encoding="utf-8"))

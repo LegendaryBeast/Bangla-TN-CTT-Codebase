@@ -1,23 +1,3 @@
-"""Draws the adjudicated normalization test subset and writes the blind annotation sheets.
-
-Sample (BanglaMix split-42 test set, 1,261 comments):
-  * every code-mixed comment (likely_code_mixed = True; 464 comments), and
-  * 136 monolingual comments drawn at random, allocated to monolingual_BAN / _ENG / _ROM_BAN in proportion to
-    their test-set sizes (411 / 207 / 129 -> 75 / 38 / 23). "undetermined" comments (50) are not sampled.
-The 600 comments are shuffled once (seed below); the first 50 in that order form the pilot.
-
-Each sheet has one row per source token, prefilled with the silver target. For comments whose reference is not
-token-aligned in the corpus, the silver targets come from the aligner, exactly as in training (lexicon from the
-aligned split-42 training comments). No system output is shown anywhere.
-
-Writes (in this folder):
-  sample_key.csv          one row per comment (order, id, mix type, alignment, pilot flag)
-  tokens_key.csv          one row per token with the silver target (the reference for scoring; never edited)
-  sheets/pilot_annotator_{A,B}.xlsx   the first 50 comments
-  sheets/full_annotator_{A,B}.xlsx    all 600 comments (the pilot comments come first)
-
-Run from the repo root:  python annotation/adjudicated_test/make_sample.py
-"""
 import os, sys
 import numpy as np, pandas as pd
 from openpyxl import Workbook
@@ -27,18 +7,18 @@ from openpyxl.worksheet.datavalidation import DataValidation
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, os.path.join(ROOT, "kaggle", "src"))
-from banglish_align import GLUE, Aligner  # noqa: E402
+from banglish_align import GLUE, Aligner
 
 SEED, SPLIT, N_PILOT = 2026, 42, 50
 MONO = {"monolingual_BAN": 75, "monolingual_ENG": 38, "monolingual_ROM_BAN": 23}
-GLUE_MARK = "~"        # shown to annotators: "attach to the previous word without a space"
+GLUE_MARK = "~"
 FLAGS = ["source unclear", "token misaligned", "offensive or personal data", "other (see notes)"]
 
 import unicodedata
 NUKTA = {"ড়": "ড়", "ঢ়": "ঢ়", "য়": "য়"}
 
 
-def bn(s):                       # identical to analysis/review_analyses.py
+def bn(s):
     s = unicodedata.normalize("NFC", s)
     for k, v in NUKTA.items():
         s = s.replace(k, v)
@@ -131,7 +111,7 @@ def write_sheet(path, ks, annotator):
                     corrected_target=r.silver_target, acceptable_variants="", flag="", notes="")
         for j, (name, _) in enumerate(COLS, 1):
             cell = ws.cell(i, j, vals[name])
-            cell.number_format = "@"                       # keep digits and leading ~ as text
+            cell.number_format = "@"
             cell.alignment = Alignment(wrap_text=name in ("context", "silver_comment_reference"), vertical="top")
             if band and name not in EDIT:
                 cell.fill = BLUE

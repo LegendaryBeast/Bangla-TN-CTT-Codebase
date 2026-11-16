@@ -1,32 +1,10 @@
-# %% [markdown]
-# # CTT error analysis (reviewer point: "what errors does the proposed model still make?")
-# The paper's error taxonomy (Table 8) describes the CPU lexicon baseline. This notebook does the same for the
-# **proposed CTT** (`ctx_plain_aks_heads`, guarded outputs, 3 splits), in two parts:
-#
-# 1. **Automatic taxonomy over all CTT token errors** (no annotation needed): rule-based categories, like
-#    `experiments/06_error_taxonomy.py`.
-# 2. **Human annotation of a 200-error sample** by two annotators, with categories that also separate *model* errors
-#    from *reference* problems (wrong silver target, or two equally valid spellings). The silver references were
-#    written by one annotator, so this tells reviewers how much of CTT's remaining error is real.
-#
-# **Workflow**
-# 1. Run all cells once (from the `analysis/` folder). This writes, in `analysis/error_annotation/`:
-#    `ctt_errors_annotator1.xlsx`, `ctt_errors_annotator2.xlsx` (identical rows, give one to each annotator; they
-#    must not see each other's file) and `ctt_errors_key.csv` (automatic labels, *not* for annotators).
-# 2. Annotators fill the `label` column (drop-down) and, if useful, `notes`. Each takes ~1.5 h for 200 items.
-# 3. Put the two filled files back (same names) and rerun the notebook. Part 2 then prints agreement (κ), the
-#    items to adjudicate, the final category shares with 95% CIs, and a LaTeX table for the paper.
-# 4. Optional: after adjudication, fill `final_label` in `ctt_errors_adjudicated.xlsx` and rerun for the final table.
-#
-# Existing annotation files are never overwritten.
-
 # %%
 import json, os, re, unicodedata
 from collections import Counter
 from pathlib import Path
 import numpy as np, pandas as pd
 
-ROOT = Path.cwd().parent if Path.cwd().name == "analysis" else Path.cwd()          # the repository root
+ROOT = Path.cwd().parent if Path.cwd().name == "analysis" else Path.cwd()
 assert (ROOT / "data" / "BanglaMix.csv").exists(), f"run from the repo root or analysis/ (now {Path.cwd()})"
 OUTDIR = ROOT / "analysis" / "error_annotation"
 OUTDIR.mkdir(parents=True, exist_ok=True)
@@ -48,7 +26,7 @@ def max_run(s):
     return max([len(m.group(0)) // len(m.group(1)) for m in RUN.finditer(s)] or [1])
 
 
-def guard(span, src):   # identical to rep_guard in ctt.py
+def guard(span, src):
     allowed = max(3, max_run(bn(src).lower()) + 2)
     return RUN.sub(lambda m: m.group(1) * min(allowed, len(m.group(0)) // len(m.group(1)))
                    + m.group(0)[len(m.group(0)) // len(m.group(1)) * len(m.group(1)):], span)
@@ -88,21 +66,6 @@ df["targets"] = df.bengali_transliteration.map(lambda s: bn(s).split())
 df["aligned"] = [len(a) == len(b) for a, b in zip(df.tokens, df.targets)]
 print(len(df), "comments")
 
-# %% [markdown]
-# ## Part 1: all CTT token errors and an automatic taxonomy
-# Token errors are counted on token-aligned test comments (as in the paper's token accuracy). Each error goes to the
-# first matching category:
-# 1. **BAN: respelling missed**: Bengali-script token copied unchanged, but the reference respells it
-# 2. **BAN: wrong change**: Bengali-script token the reference keeps, but CTT changed it
-# 3. **BAN: different respelling**: both changed it, differently
-# 4. **Digit / symbol (OTH)**
-# 5. **Glued / UNK token**: emoji or punctuation glued to a word
-# 6. **Latin word unseen in training**
-# 7. **Latin word seen in training**: includes context homographs (`ar` → আর / এর) and reference spelling variants
-#
-# Errors where the output is correct except for an invisible control byte (the decoder sometimes emits `\x02` before
-# a word) are counted separately as **Invisible control byte only** and left out of the human sample.
-
 # %%
 rows = []
 for s in SEEDS:
@@ -125,7 +88,7 @@ CTRL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 
 def auto_category(r):
     if CTRL.search(r.output) and CTRL.sub("", r.output) == r.reference:
-        return "Invisible control byte only"           # decoder emitted e.g. \x02 before a correct word
+        return "Invisible control byte only"
     src = bn(r.token)
     if r.tag == "BAN":
         if r.output == src:
@@ -157,11 +120,6 @@ for c in tax.index:
     ex = Err[Err.auto_category == c][["token", "tag", "output", "reference"]].value_counts().head(4)
     print(f"\n{c}:"); print(ex.to_string())
 
-# %% [markdown]
-# ## Part 1b: sample 200 errors for human annotation
-# Stratified by split (proportional), fixed random seed. Annotators see the comment with the token marked ⟦like this⟧,
-# the source token, its silver tag, CTT's output and the reference. They do **not** see the automatic category.
-
 # %%
 LABELS = {
     "M1 transliteration": "Model error: a Latin-script word rendered with a wrong Bengali spelling (e.g. kortaci -> করটাছি)",
@@ -187,7 +145,7 @@ else:
     per_split = (pool.split.value_counts(normalize=True) * N_SAMPLE).round().astype(int)
     per_split.iloc[0] += N_SAMPLE - per_split.sum()
     sample = pd.concat([pool[pool.split == s].sample(n, random_state=rng) for s, n in per_split.items()])
-    sample = sample.sample(frac=1, random_state=rng).reset_index(drop=True)      # shuffle so splits are mixed
+    sample = sample.sample(frac=1, random_state=rng).reset_index(drop=True)
     sample.insert(0, "item_id", [f"E{i + 1:03d}" for i in range(len(sample))])
     Key = sample.rename(columns={"output": "ctt_output"})
 
@@ -224,13 +182,9 @@ else:
         info.column_dimensions["A"].width = 32; info.column_dimensions["B"].width = 110
         info["A1"].font = Font(bold=True, size=13); info["A6"].font = Font(bold=True); info["B6"].font = Font(bold=True)
         wb.save(path)
-    Key[KEY_COLS + ["token", "ctt_output", "reference", "context"]].to_csv(key_path, index=False)   # last: marks the sample as done
+    Key[KEY_COLS + ["token", "ctt_output", "reference", "context"]].to_csv(key_path, index=False)
     print("wrote", *sheet_paths, key_path, sep="\n  ")
 print(Key.auto_category.value_counts().to_string())
-
-# %% [markdown]
-# ## Part 2: after annotation: agreement, adjudication, final shares
-# Runs only when both annotator files have labels.
 
 # %%
 from sklearn.metrics import cohen_kappa_score
@@ -248,7 +202,7 @@ if min(done) < len(Key):
     print("Part 2 waits until both annotators have labelled all", len(Key), "items.")
 else:
     A = pd.DataFrame({"a1": ann[0], "a2": ann[1]}).join(Key.set_index("item_id"))
-    A["a1_major"], A["a2_major"] = A.a1.str[0], A.a2.str[0]                      # M (model) / R (reference) / O
+    A["a1_major"], A["a2_major"] = A.a1.str[0], A.a2.str[0]
     print(f"Cohen's kappa, fine labels: {cohen_kappa_score(A.a1, A.a2):.3f} | model vs. reference: "
           f"{cohen_kappa_score(A.a1_major, A.a2_major):.3f} | raw agreement {100 * (A.a1 == A.a2).mean():.1f}%")
     display(pd.crosstab(A.a1, A.a2))

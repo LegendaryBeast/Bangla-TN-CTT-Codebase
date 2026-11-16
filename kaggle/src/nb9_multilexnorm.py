@@ -1,33 +1,3 @@
-# %% [markdown]
-# # CTT on a second dataset: MultiLexNorm code-switched normalization (Indonesian–English, Turkish–German)
-# **Why this notebook.** Reviewers asked whether CTT works beyond BanglaMix, and whether the ÚFAL comparison holds
-# against ÚFAL's *published* system. MultiLexNorm (W-NUT 2021) has two code-switched sets with one normalization per
-# token, so CTT runs on it unchanged, and ÚFAL's official test outputs exist (ERR on test, official formula:
-# **iden 66.15 / 67.18**, **trde 68.19 / 68.62** for ÚFAL-1 / ÚFAL-2).
-#
-# **What runs** (same `ctt.py` code base and settings as on BanglaMix; training seeds 13, 42, 2026 on the official
-# split, so the spread over seeds is training variance only):
-#
-# | variant | what it is |
-# |---|---|
-# | `<lang>_word` | word level, no context |
-# | `<lang>_ctx` | context-only CTT (one encoder pass, focus vectors) |
-# | `<lang>_ctx_copy` | CTT with the learned copy gate (no Aksharantar warm start or LID head: they are Bengali-specific) |
-# | `<lang>_ufal` | ÚFAL-style per-word re-encoding, same network and training as `<lang>_ctx` |
-#
-# Data: the MultiLexNorm repository is cloned at a fixed commit and converted by `mln_convert.py`
-# (Indonesian–English uses its official dev split for epoch selection; Turkish–German has none, so 10% of its
-# training sentences are held out). MultiLexNorm's own licences apply; nothing is redistributed.
-#
-# ### How to run (Kaggle)
-# 1. No dataset needs to be attached. Settings: **GPU T4 x2**, **Internet ON** (clones MultiLexNorm, downloads ByT5-small).
-# 2. Two versions keep each session well under 12 h (the job loop skips finished jobs, so a re-run resumes):
-#    - **Version 1:** `LANGS = ["iden"]` (default below)
-#    - **Version 2:** `LANGS = ["trde"]`
-#    Check the first epoch's `train_min` in a log: the `_ufal` jobs cost about 5× the others.
-# 3. *Save Version → Save & Run All*. Download the whole `/kaggle/working/ctt` folder of each version and put the
-#    files of both into `results/gpu/nb9_multilexnorm/`. Then run locally: `python analysis/analyze_mln.py`.
-
 # %%
 !pip -q install rapidfuzz 2>/dev/null
 
@@ -37,30 +7,24 @@
 
 # %% writefile mln_convert.py
 
-# %% [markdown]
-# ## Data
-
 # %%
 import glob, json, os, shutil, subprocess, sys, time, unicodedata
 import numpy as np, pandas as pd, torch
 
 MLN_REPO, MLN_COMMIT = "https://bitbucket.org/robvanderg/multilexnorm.git", "e58e946375299a04355fa2d7fa9e1c769234e68a"
 SRC, DATA, OUT = "/kaggle/working/multilexnorm", "/kaggle/working/mln", "/kaggle/working/ctt"
-LANGS = ["iden"]            # Version 1; Version 2: ["trde"]
+LANGS = ["iden"]
 if not os.path.exists(SRC):
     subprocess.run(["git", "clone", "-q", MLN_REPO, SRC], check=True)
 subprocess.run(["git", "-C", SRC, "checkout", "-q", MLN_COMMIT], check=True)
 subprocess.run([sys.executable, "/kaggle/working/mln_convert.py", "--repo", SRC, "--out", DATA, "--langs", *LANGS], check=True)
 os.makedirs(OUT, exist_ok=True)
-for lang in LANGS:   # keep the converted data with the results, so the analysis is self-contained
+for lang in LANGS:
     shutil.copy(f"{DATA}/{lang}/mln.csv", f"{OUT}/mln_{lang}.csv")
-
-# %% [markdown]
-# ## Configuration and jobs
 
 # %%
 SCRIPT = "/kaggle/working/ctt.py"
-EPOCHS = 10                 # MultiLexNorm sets are ~10x smaller than BanglaMix; the best epoch is chosen on validation
+EPOCHS = 10
 SEEDS = [42, 13, 2026]
 MODEL = "google/byt5-small"
 BASE_ARGS = ["--batch_words", "48", "--accum", "2", "--max_chunks", "8", "--gen_bs", "48", "--data_csv", "mln.csv"]
@@ -71,9 +35,8 @@ VARIANTS = {
     "ctx_copy": (dict(mode="focus", align=1, copy_mu=0.5, detach_heads=1), []),
     "word":     (dict(mode="word", align=1), []),
 }
-# most expensive first, so the two GPUs finish at about the same time
 JOBS = [dict(lang=l, name=f"{l}_{v}", seed=s, cfg=c, extra=x) for v, (c, x) in VARIANTS.items() for l in LANGS for s in SEEDS]
-JOBS = [j for j in JOBS if not os.path.exists(f"{OUT}/result_{j['name']}_s{j['seed']}.json")]   # resume-safe
+JOBS = [j for j in JOBS if not os.path.exists(f"{OUT}/result_{j['name']}_s{j['seed']}.json")]
 print(len(JOBS), "jobs:", [f"{j['name']}/s{j['seed']}" for j in JOBS])
 
 # %%
@@ -115,16 +78,11 @@ while queue or running:
         else:
             print(f"[{(time.time() - t0) / 60:6.1f} min] gpu{g} {tail(j)}")
 
-# %% [markdown]
-# ## Results in this session: test ERR (official MultiLexNorm formula, case-sensitive)
-# ERR = (accuracy − leave-as-is accuracy) / (1 − leave-as-is accuracy), over all test tokens. Published ÚFAL test ERR:
-# iden 66.15 / 67.18, trde 68.19 / 68.62 (ÚFAL-1 / ÚFAL-2).
-
 # %%
 def err_of(spans, data):
     cor = changed = total = 0
     for cid, toks, gold in data:
-        if cid not in spans:     # only in smoke tests with --subsample
+        if cid not in spans:
             continue
         pred = spans[cid]
         assert len(pred) == len(gold)

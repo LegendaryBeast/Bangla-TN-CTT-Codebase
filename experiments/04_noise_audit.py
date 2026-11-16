@@ -1,10 +1,3 @@
-"""Label-noise audit with confident learning (Northcutt et al., 2021) on out-of-fold CRF marginals.
-
-Outputs
-  results/04_noise_matrix.csv        estimated P(observed label | latent label), data-driven
-  results/04_noise_candidates.csv    all flagged tokens, ranked, with context
-  results/04_audit_sheet.csv         blind 400-token sheet (200 flagged + 200 random) for manual re-annotation
-"""
 import json
 import os
 

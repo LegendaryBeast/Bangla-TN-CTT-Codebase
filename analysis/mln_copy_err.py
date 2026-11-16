@@ -1,9 +1,3 @@
-"""ERR of CTT with the copy gate on MultiLexNorm, reconstructed from saved outputs (no new run).
-
-With the copy gate, each token's output is either the free-decoding output for that token (same decoder, greedy) or the
-source token itself. The per-token choice is recovered by matching the saved copy-gate text; ERR is then scored as in
-analyze_mln.py. Run from the repo root: python analysis/mln_copy_err.py
-"""
 import json, os, sys, unicodedata
 import numpy as np, pandas as pd
 M = "results/gpu/nb9_multilexnorm"
@@ -11,7 +5,6 @@ nfc = lambda s: unicodedata.normalize("NFC", s)
 
 
 def choose(src, free, text):
-    """Return per-token outputs (free span or source) whose non-empty join equals text, or None."""
     target = text.split()
     def rec(i, j):
         if i == len(src):

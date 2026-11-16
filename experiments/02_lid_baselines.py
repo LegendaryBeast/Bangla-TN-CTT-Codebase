@@ -1,7 +1,3 @@
-"""Token-level LID baselines (classical ML) on three duplicate-aware stratified splits.
-
-Models: script rule, train lexicon, char n-gram LR (token only), LR + context window, linear-chain CRF.
-"""
 import json
 import os
 import pickle
@@ -101,7 +97,6 @@ def run_seed(df, seed):
     preds["CRF (char n-gram + context)"] = crf.predict([sent_feats(ws) for ws in tew])
     print("  CRF", round(time.time() - t, 1), "s")
 
-    # Save CRF predictions for train/val/test (used by translit pipeline and the noise audit)
     allp = {}
     for part in (tr, va, te):
         for i, ws in zip(part.id, crf.predict([sent_feats(ws) for ws in part.tokens])):
@@ -123,7 +118,6 @@ def run_seed(df, seed):
         s["ENG/ROM_BAN Acc"] = 100 * (pf[latin] == gf[latin]).mean()
         s.update(model=name, seed=seed)
         rows.append(s)
-        # per code-mix stratum token accuracy (macro-F1 is ill-defined when strata lack classes)
         for cmt, g in te.assign(pred=pr).groupby("code_mix_type"):
             extra[(name, cmt)] = 100 * np.mean(np.array(flat(g.labels)) == np.array(flat(g.pred)))
     return rows, preds, tel, extra

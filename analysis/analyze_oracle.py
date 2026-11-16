@@ -1,23 +1,10 @@
-"""Oracle-tag check of the LID ablation (nb8), after its outputs are in results/gpu/nb8_oracle_tags/.
-
-Split 42, guarded CER (same guard and bootstrap as repetition_guard.py / analyze_ufal.py). Prints
-  1. the word/context x none/predicted/oracle table (every run listed, so run-to-run spread is visible);
-  2. paired comment-clustered bootstrap tests (2,000 resamples) for the questions the review asked:
-     - CRF vs. gold tags with the SAME weights (the train-test tag mismatch, free of training noise);
-     - oracle tags vs. no tags, at word level and with context (do tags help at all?);
-     - predicted tags vs. no tags at word level (the missing factorial cell);
-     - reruns vs. the original nb5 runs (run-to-run variation).
-Missing runs are skipped, so the script also works before nb8 is downloaded.
-
-Run from the repo root:  python analysis/analyze_oracle.py
-"""
 import json, os, re, sys, unicodedata
 import numpy as np, pandas as pd
 from rapidfuzz.distance import Levenshtein
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "kaggle", "src"))
-from banglish_align import join_spans  # noqa: E402
+from banglish_align import join_spans
 
 GPU = os.path.join(ROOT, "results", "gpu")
 DIRS = [os.path.join(GPU, "nb8_oracle_tags"), os.path.join(GPU, "nb5_ctt", "stage1_seed42"),
@@ -39,7 +26,7 @@ def max_run(s):
     return max([len(m.group(0)) // len(m.group(1)) for m in RUN.finditer(s)] or [1])
 
 
-def guard(span, src):   # identical to rep_guard in kaggle/src/ctt.py
+def guard(span, src):
     allowed = max(3, max_run(bn(src).lower()) + 2)
     return RUN.sub(lambda m: m.group(1) * min(allowed, len(m.group(0)) // len(m.group(1)))
                    + m.group(0)[len(m.group(0)) // len(m.group(1)) * len(m.group(1)):], span)
@@ -51,7 +38,6 @@ toks = {i: [t.rsplit("/", 1)[0] for t in tl.split(" ")] for i, tl in zip(df.id, 
 
 
 def errors(v):
-    """Per-comment guarded and raw character errors of system v on split 42, or None if its spans are missing."""
     for d in DIRS:
         p = os.path.join(d, f"test_spans_{v}_s{S}.json")
         if os.path.exists(p):
@@ -63,7 +49,6 @@ def errors(v):
     return None
 
 
-#            cell (level, tags)       runs (variant names; "_goldtags" = same weights tested with gold tags)
 CELLS = [(("word", "none"),      ["word_plain_align"]),
          (("word", "predicted"), ["word_crf_align", "word_crf_align_rerun"]),
          (("word", "oracle"),    ["word_crf_align_rerun_goldtags"]),
@@ -89,7 +74,7 @@ if len(T):
     print(T.pivot_table(index="level", columns="tags", values="CER_guard", aggfunc="mean")
            .reindex(columns=["none", "predicted", "oracle"]).round(2).to_string())
 
-TESTS = [  # (question, a, b): dCER = CER(a) - CER(b); < 0 means a is better
+TESTS = [
     ("same weights: gold vs CRF tags (context)", "ctx_crf_rerun_goldtags", "ctx_crf_rerun"),
     ("same weights: gold vs CRF tags (word)", "word_crf_align_rerun_goldtags", "word_crf_align_rerun"),
     ("oracle tags vs no tags (context)", "ctx_crf_rerun_goldtags", "ctx_plain"),

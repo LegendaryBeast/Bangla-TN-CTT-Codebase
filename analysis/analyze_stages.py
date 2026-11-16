@@ -1,5 +1,3 @@
-"""Merge the CTT stages in results/gpu/nb5_ctt/ (stage 1, 2 and 3a): 3-split tables, paired bootstrap tests on raw
-outputs, and the comments that contribute most to CER differences.  Run from the repo root:  python analysis/analyze_stages.py"""
 import json, os, unicodedata
 import numpy as np, pandas as pd
 
@@ -42,7 +40,6 @@ def find(name):
 df = pd.read_csv(os.path.join(ROOT, "data", "BanglaMix.csv"))
 ref = {i: " ".join(bn(t).split()) for i, t in zip(df.id, df.bengali_transliteration)}
 
-# ---------------------------------------------------------------- per-seed metrics from result files
 SYSTEMS = ["word_crf", "ctx_plain", "ctx_plain_aks_heads", "ctx_plain_aks_heads_e8"]
 rows = []
 for v in SYSTEMS:
@@ -67,7 +64,6 @@ g = R.groupby(["system", "mode"], sort=False)
 cols = ["CER", "WER", "EM", "TokAcc", "ENG", "ROM", "OTH", "UNK", "OOV", "decoded", "wps"]
 print((g[cols].mean().round(2).astype(str) + " ± " + g[cols].std().round(2).astype(str)).assign(n=g.size()).to_string())
 
-# ---------------------------------------------------------------- comment-level errors
 E, LN, IDS = {}, {}, {}
 for s in SEEDS:
     ids = sorted(json.load(open(find(f"test_text_word_crf_s{s}_free.json"), encoding="utf-8")))
@@ -82,7 +78,6 @@ rng = np.random.RandomState(0)
 
 
 def boot(a, b, seeds, n=2000):
-    """Paired comment-clustered bootstrap; with several seeds, resample within each split and pool."""
     ea = np.concatenate([E[a + (s,)] for s in seeds]); eb = np.concatenate([E[b + (s,)] for s in seeds])
     ln = np.concatenate([LN[s] for s in seeds])
     off = np.cumsum([0] + [len(LN[s]) for s in seeds])
@@ -104,7 +99,6 @@ for a, b in pairs:
         tag = "pooled" if len(seeds) > 1 else f"s{seeds[0]}"
         print(f"{a[0]}[{a[1]}] vs {b[0]}[{b[1]}] {tag:7s} dCER {dd:+.2f} CI [{lo:+.2f}, {hi:+.2f}] p={p:.3f}")
 
-# ---------------------------------------------------------------- outliers: comments driving a CER gap
 print("\n== largest per-comment error differences, ctx_plain_aks_heads - ctx_plain (seed 42)")
 s = 42
 diff = E[("ctx_plain_aks_heads", "free", s)] - E[("ctx_plain", "free", s)]
