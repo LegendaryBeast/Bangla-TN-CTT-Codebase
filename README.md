@@ -53,6 +53,8 @@ python analysis/analyze_mln.py
 python analysis/mln_copy_err.py
 python analysis/clustered_tests.py
 python analysis/chunk_alignment_sensitivity.py
+python analysis/replicate_tests.py
+python annotation/adjudicated_test/reference_sensitivity.py
 ```
 
 The confidence intervals and p-values in the article come from `analysis/clustered_tests.py`. It swaps and resamples
@@ -61,6 +63,9 @@ a test sentence together; its output is `analysis/clustered_tests_output.txt`. `
 `analyze_seeds.py`, and `codemixed_eval.py` give the earlier comment-level versions of the same tests.
 `analysis/chunk_alignment_sensitivity.py` compares single- and multi-chunk comments and chunk-boundary tokens, and
 tests training with and without the aligner-recovered comments.
+`analysis/replicate_tests.py` treats splits, training runs, and MultiLexNorm seeds as replicates, so its tests include
+training variation. `annotation/adjudicated_test/reference_sensitivity.py` scores the systems against each annotator's
+references and reweights the adjudicated subset to the composition of the split-42 test set.
 
 The exactness of one shared encoder pass and the encoder cost of per-word re-encoding (Proposition 1 and the
 second-hardware timing in the article) are checked with
@@ -73,6 +78,16 @@ The output of the run reported in the article (Apple M2 GPU) is `analysis/exactn
 It builds the ByT5-small architecture with random weights (neither property depends on the weights), so it needs no
 download; use `--device cpu` without an Apple GPU. If `transformers` fails because of an installed TensorFlow, set
 `USE_TF=0`.
+
+The full inference pipeline (input preparation to output text) is timed for every system at two encoder budgets with
+
+```
+python analysis/pipeline_timing.py --root . --device mps --out pipeline_timing.json
+```
+
+It also uses random weights and fixes each word's number of decoding steps to the length of the saved output of the
+trained system. The run reported in the article took about three hours on an Apple M2; its output is
+`analysis/pipeline_timing_m2.json`.
 
 The adjudicated subset is scored with
 

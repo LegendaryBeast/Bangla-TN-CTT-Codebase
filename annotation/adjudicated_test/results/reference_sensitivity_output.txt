@@ -1,0 +1,40 @@
+subset 600 comments; split-42 test comments by type: {'monolingual_BAN': 411, 'ENG+ROM_BAN': 343, 'monolingual_ENG': 207, 'monolingual_ROM_BAN': 129, 'BAN+ENG': 81, 'undetermined': 50, 'BAN+ENG+ROM_BAN': 21, 'BAN+ROM_BAN': 19}; sample: {'ENG+ROM_BAN': 343, 'BAN+ENG': 81, 'monolingual_BAN': 75, 'monolingual_ENG': 38, 'monolingual_ROM_BAN': 23, 'BAN+ENG+ROM_BAN': 21, 'BAN+ROM_BAN': 19}
+
+== A. CER (%) of each system against each reference (mean over runs)
+                        silver  annotator A  annotator B  adjudicated  adjudicated, reweighted  silver, reweighted
+system                                                                                                            
+word_crf                  5.09         5.14         4.89         5.06                     3.91                3.95
+Word level (matched)      5.01         5.00         4.71         4.90                     3.77                3.88
+ÚFAL-style re-encoding    4.56         4.77         4.44         4.62                     3.44                3.46
+Context-only CTT          4.54         4.53         4.33         4.44                     3.31                3.42
+CTT                       4.46         4.52         4.33         4.43                     3.33                3.40
+
+  rank of each system (1 = lowest CER):
+                        silver  annotator A  annotator B  adjudicated  adjudicated, reweighted  silver, reweighted
+system                                                                                                            
+word_crf                     5            5            5            5                        5                   5
+Word level (matched)         4            4            4            4                        4                   4
+ÚFAL-style re-encoding       3            3            3            3                        3                   3
+Context-only CTT             2            2            2            2                        1                   2
+CTT                          1            1            1            1                        2                   1
+
+  check of the reweighting: actual silver CER on the 1211 split-42 test comments with a determined type
+  word_crf                 actual  4.16   reweighted estimate from the subset  3.95   difference -0.20
+  Word level (matched)     actual  4.24   reweighted estimate from the subset  3.88   difference -0.35
+  ÚFAL-style re-encoding   actual  3.84   reweighted estimate from the subset  3.46   difference -0.37
+  Context-only CTT         actual  3.71   reweighted estimate from the subset  3.42   difference -0.28
+  CTT                      actual  3.80   reweighted estimate from the subset  3.40   difference -0.40
+
+== B. paired tests against each annotator's references (all runs of a comment and all comments of a near-duplicate group swapped and resampled together)
+  CTT vs Word level (matched)     [annotator A] d -0.49  95% CI [-0.80, -0.23]  p = 0.0001
+  CTT vs Word level (matched)     [annotator B] d -0.39  95% CI [-0.69, -0.13]  p = 0.0023
+  CTT vs Word level (matched)     [adjudicated] d -0.47  95% CI [-0.76, -0.22]  p = 0.0004
+  CTT vs Word level (matched)     [adjudicated, reweighted] d -0.44  95% CI [-0.74, -0.16]  p = 0.0008
+  Context-only CTT vs Word level (matched)     [annotator A] d -0.48  95% CI [-0.75, -0.23]  p = 0.0001
+  Context-only CTT vs Word level (matched)     [annotator B] d -0.38  95% CI [-0.71, -0.12]  p = 0.0025
+  Context-only CTT vs Word level (matched)     [adjudicated] d -0.46  95% CI [-0.78, -0.20]  p = 0.0004
+  Context-only CTT vs Word level (matched)     [adjudicated, reweighted] d -0.46  95% CI [-0.80, -0.17]  p = 0.0017
+  CTT vs ÚFAL-style re-encoding   [annotator A] d -0.23  95% CI [-1.05, +0.33]  p = 0.7619
+  CTT vs ÚFAL-style re-encoding   [annotator B] d -0.15  95% CI [-0.98, +0.40]  p = 0.8856
+  CTT vs ÚFAL-style re-encoding   [adjudicated] d -0.21  95% CI [-1.04, +0.32]  p = 0.7797
+  CTT vs ÚFAL-style re-encoding   [adjudicated, reweighted] d -0.04  95% CI [-0.69, +0.60]  p = 0.9151

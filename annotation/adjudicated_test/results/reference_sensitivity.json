@@ -1,0 +1,149 @@
+{
+ "weights": {
+  "ENG+ROM_BAN": 1.0,
+  "BAN+ENG": 1.0,
+  "monolingual_BAN": 5.48,
+  "monolingual_ENG": 5.447368421052632,
+  "monolingual_ROM_BAN": 5.608695652173913,
+  "BAN+ENG+ROM_BAN": 1.0,
+  "BAN+ROM_BAN": 1.0
+ },
+ "reweighting_check": {
+  "word_crf": {
+   "actual": 4.155020587262946,
+   "estimate": 3.9505762844648165
+  },
+  "Word level (matched)": {
+   "actual": 4.236668369749246,
+   "estimate": 3.8844490382026016
+  },
+  "\u00daFAL-style re-encoding": {
+   "actual": 3.8379466834971296,
+   "estimate": 3.4631184419298493
+  },
+  "Context-only CTT": {
+   "actual": 3.705707330267785,
+   "estimate": 3.4222347493411824
+  },
+  "CTT": {
+   "actual": 3.7973732455744895,
+   "estimate": 3.40013116792635
+  }
+ },
+ "cer": {
+  "silver": {
+   "word_crf": 5.094,
+   "Word level (matched)": 5.007,
+   "\u00daFAL-style re-encoding": 4.565,
+   "Context-only CTT": 4.537,
+   "CTT": 4.464
+  },
+  "annotator A": {
+   "word_crf": 5.144,
+   "Word level (matched)": 5.004,
+   "\u00daFAL-style re-encoding": 4.768,
+   "Context-only CTT": 4.528,
+   "CTT": 4.518
+  },
+  "annotator B": {
+   "word_crf": 4.895,
+   "Word level (matched)": 4.715,
+   "\u00daFAL-style re-encoding": 4.436,
+   "Context-only CTT": 4.334,
+   "CTT": 4.33
+  },
+  "adjudicated": {
+   "word_crf": 5.064,
+   "Word level (matched)": 4.901,
+   "\u00daFAL-style re-encoding": 4.622,
+   "Context-only CTT": 4.441,
+   "CTT": 4.432
+  },
+  "adjudicated, reweighted": {
+   "word_crf": 3.911,
+   "Word level (matched)": 3.769,
+   "\u00daFAL-style re-encoding": 3.44,
+   "Context-only CTT": 3.313,
+   "CTT": 3.327
+  },
+  "silver, reweighted": {
+   "word_crf": 3.951,
+   "Word level (matched)": 3.884,
+   "\u00daFAL-style re-encoding": 3.463,
+   "Context-only CTT": 3.422,
+   "CTT": 3.4
+  }
+ },
+ "CTT vs Word level (matched) [annotator A]": {
+  "d": -0.4855261398582698,
+  "lo": -0.7999739054415901,
+  "hi": -0.22786325845253821,
+  "p": 9.999000099990002e-05
+ },
+ "CTT vs Word level (matched) [annotator B]": {
+  "d": -0.3853226345703778,
+  "lo": -0.6937857396047121,
+  "hi": -0.12595501884759933,
+  "p": 0.0022997700229977
+ },
+ "CTT vs Word level (matched) [adjudicated]": {
+  "d": -0.46864669896981415,
+  "lo": -0.7625902111550295,
+  "hi": -0.21725867586235875,
+  "p": 0.00039996000399960006
+ },
+ "CTT vs Word level (matched) [adjudicated, reweighted]": {
+  "d": -0.4421192755419608,
+  "lo": -0.7363689064050384,
+  "hi": -0.16462323007603874,
+  "p": 0.0007999200079992001
+ },
+ "Context-only CTT vs Word level (matched) [annotator A]": {
+  "d": -0.47633373445647814,
+  "lo": -0.753298031650316,
+  "hi": -0.22541121069820313,
+  "p": 9.999000099990002e-05
+ },
+ "Context-only CTT vs Word level (matched) [annotator B]": {
+  "d": -0.3811434302908726,
+  "lo": -0.706069265411646,
+  "hi": -0.12314418818857217,
+  "p": 0.0024997500249975004
+ },
+ "Context-only CTT vs Word level (matched) [adjudicated]": {
+  "d": -0.4594411388114785,
+  "lo": -0.7817698244691088,
+  "hi": -0.20435224331010585,
+  "p": 0.00039996000399960006
+ },
+ "Context-only CTT vs Word level (matched) [adjudicated, reweighted]": {
+  "d": -0.4559719369637932,
+  "lo": -0.7997525604563378,
+  "hi": -0.17330125961062975,
+  "p": 0.0016998300169983002
+ },
+ "CTT vs \u00daFAL-style re-encoding [annotator A]": {
+  "d": -0.22563176895306858,
+  "lo": -1.0471161120567125,
+  "hi": 0.328859942467755,
+  "p": 0.7619238076192381
+ },
+ "CTT vs \u00daFAL-style re-encoding [annotator B]": {
+  "d": -0.15045135406218657,
+  "lo": -0.9760554252875121,
+  "hi": 0.3998667377398716,
+  "p": 0.8856114388561144
+ },
+ "CTT vs \u00daFAL-style re-encoding [adjudicated]": {
+  "d": -0.21089101453641637,
+  "lo": -1.039105966013715,
+  "hi": 0.32083322325713487,
+  "p": 0.7797220277972203
+ },
+ "CTT vs \u00daFAL-style re-encoding [adjudicated, reweighted]": {
+  "d": -0.03638506744164408,
+  "lo": -0.6873097186437951,
+  "hi": 0.5973323570931828,
+  "p": 0.9151084891510849
+ }
+}

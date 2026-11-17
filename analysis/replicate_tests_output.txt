@@ -1,0 +1,20 @@
+== A. split level: one training run per split, so the three differences include training and split variation
+  word_crf               CER per split [4.55, 4.47, 4.3]
+  ctx_plain              CER per split [3.96, 3.64, 3.61]
+  ctx_plain_aks_heads    CER per split [3.64, 4.08, 3.45]
+  ufal_plain             CER per split [4.19, 4.03, 3.7]
+  CTT vs re-encoding                                   differences [-0.55, 0.05, -0.26]  mean -0.25  t = -1.45  p = 0.284  first lower in 2 of 3
+  context-only vs re-encoding                          differences [-0.23, -0.39, -0.1]  mean -0.24  t = -2.84  p = 0.105  first lower in 3 of 3
+  CTT vs word_crf                                      differences [-0.91, -0.38, -0.85]  mean -0.72  t = -4.30  p = 0.050  first lower in 3 of 3
+  context-only vs word_crf                             differences [-0.59, -0.83, -0.7]  mean -0.70  t = -10.27  p = 0.009  first lower in 3 of 3
+
+== B. split 42: three training runs per system, compared as independent replicates
+  CTT vs matched word level                            means 4.04 vs 4.48  Welch t = -2.20  p = 0.155  Mann-Whitney exact p = 0.100  (runs [4.08, 4.05, 4.0] vs [4.15, 4.46, 4.82])
+  context-only vs matched word level                   means 3.90 vs 4.48  Welch t = -2.42  p = 0.081  Mann-Whitney exact p = 0.100  (runs [3.64, 4.09, 3.98] vs [4.15, 4.46, 4.82])
+  re-encoding, single split-42 run: 4.03; CTT runs [4.08, 4.05, 4.0]; context-only runs [3.64, 4.09, 3.98]
+
+== C. MultiLexNorm: three training seeds per system, compared as independent replicates (ERR, %)
+  iden: CTT vs re-encoding                             means 64.38 vs 63.34  Welch t = +0.94  p = 0.423  Mann-Whitney exact p = 0.700  (runs [65.12, 63.57, 64.43] vs [61.34, 64.43, 64.26])
+  iden: context-only vs word level                     means 62.71 vs 62.26  Welch t = +0.70  p = 0.544  Mann-Whitney exact p = 1.000  (runs [61.86, 62.37, 63.92] vs [62.54, 61.86, 62.37])
+  trde: CTT vs re-encoding                             means 58.81 vs 60.21  Welch t = -0.79  p = 0.502  Mann-Whitney exact p = 1.000  (runs [60.39, 60.65, 55.39] vs [60.39, 59.33, 60.91])
+  trde: context-only vs word level                     means 58.84 vs 40.05  Welch t = +7.88  p = 0.007  Mann-Whitney exact p = 0.100  (runs [58.81, 60.39, 57.32] vs [36.02, 43.65, 40.49])
