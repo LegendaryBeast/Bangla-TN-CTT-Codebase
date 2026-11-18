@@ -136,6 +136,9 @@ with `--save_weights 1`; the weight files are not included because of their size
 python analysis/pipeline_timing_trained.py --root . --ctt_weights weights_ctt_ts3_s42.pt --ufal_weights weights_ufal_plain_ts1_s42.pt --device mps --out pipeline_timing_trained.json
 ```
 
+The run reported in the article (Apple M2, three repeats at encoder budgets of 2,048 and 4,096 bytes, about
+three hours) is in `analysis/pipeline_timing_trained_m2.json` and `analysis/pipeline_timing_trained_output.txt`.
+
 The adjudicated subset is scored with
 
 ```
