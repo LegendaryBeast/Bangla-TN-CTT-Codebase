@@ -1,0 +1,8 @@
+# Apple M2 checks and timings (analysis/exactness_and_speed.py, analysis/pipeline_timing*.py): Python 3.13.9,
+# PyTorch Metal (MPS) backend, fp32. The installed torch version is also stored in each output JSON.
+-r cpu-analysis.txt
+torch==2.14.0
+transformers==4.57.6
+tokenizers==0.22.2
+safetensors==0.7.0
+huggingface-hub==0.36.2

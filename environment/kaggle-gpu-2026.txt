@@ -1,0 +1,10 @@
+# GPU runs of nb12, nb13, and nb15 (Kaggle, NVIDIA T4 x2, fp32). Recorded by ctt.py in result_*.json under "env":
+#   Python 3.13.16, CUDA 13.0, cuDNN 9.27.0, NVIDIA driver 580.178.04
+#   google/byt5-small at revision 68377bdc18a2ffec8a0533fef03b1c513a4dd49d (passed with --revision)
+# torch was installed from the CUDA 13.0 wheel index (https://download.pytorch.org/whl/cu130).
+torch==2.11.0
+transformers==5.20.2
+# installed unpinned by the notebooks (`pip install rapidfuzz`); used only for alignment and edit distances
+rapidfuzz
+pandas
+numpy

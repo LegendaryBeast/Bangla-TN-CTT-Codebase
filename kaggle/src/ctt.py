@@ -60,6 +60,8 @@ p.add_argument("--out", default="/kaggle/working/ctt")
 p.add_argument("--subsample", type=int, default=0, help="smoke tests only: use N random comments")
 p.add_argument("--data_csv", default="BanglaMix.csv", help="dataset CSV under --input (MultiLexNorm: mln.csv, nb9)")
 p.add_argument("--save_val", type=int, default=0, help="decode the full validation split after training (raw + guarded)")
+p.add_argument("--revision", default=None, help="Hugging Face revision of --model")
+p.add_argument("--save_weights", type=int, default=0, help="save the selected weights to weights_<tag>.pt")
 args = p.parse_args()
 assert not (args.inject and args.lam == 0), "injection needs a trained LID head (lam > 0)"
 assert not (args.inject and args.detach_heads), "detached heads are read-only side outputs; do not inject them"
@@ -372,7 +374,7 @@ class CTT(nn.Module):
                            decoder_start_token_id=0, pad_token_id=0, eos_token_id=1)
             self.t5 = T5ForConditionalGeneration(cfg)
         else:
-            self.t5 = T5ForConditionalGeneration.from_pretrained(args.model)
+            self.t5 = T5ForConditionalGeneration.from_pretrained(args.model, revision=args.revision)
         H = self.t5.config.d_model
         self.drop = nn.Dropout(0.1)
         self.lid = nn.Linear(H, len(LABELS))
@@ -647,7 +649,25 @@ if args.pretrain_aksharantar:
 history += train(model, tr_ex, args.epochs, args.lr, "banglamix")
 
 
-result = {"args": vars(args), "history": history, "align": align_stats,
+if args.save_weights:
+    torch.save(model.state_dict(), f"{args.out}/weights_{TAG}.pt")
+
+
+def environment():
+    import platform, subprocess, transformers
+    env = {"python": platform.python_version(), "torch": torch.__version__, "transformers": transformers.__version__,
+           "cuda": torch.version.cuda, "cudnn": torch.backends.cudnn.version() if DEV == "cuda" else None,
+           "gpu": torch.cuda.get_device_name(0) if DEV == "cuda" else None,
+           "model_revision": getattr(model.t5.config, "_commit_hash", None) or args.revision}
+    try:
+        env["driver"] = subprocess.run(["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader"],
+                                       capture_output=True, text=True, timeout=30).stdout.strip()
+    except Exception:
+        env["driver"] = None
+    return env
+
+
+result = {"args": vars(args), "env": environment(), "history": history, "align": align_stats,
           "n_test_comments": len(te), "n_test_chunks": len(te_ex), "n_test_words": int(sum(len(e["words"]) for e in te_ex))}
 gates = [None] + (["copy"] if args.copy_mu > 0 else []) + (["lid"] if args.lam > 0 or args.ext_lid != "none" else [])
 result["norm"], result["efficiency"] = {}, {}

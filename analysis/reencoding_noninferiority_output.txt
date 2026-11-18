@@ -1,0 +1,10 @@
+== CTT minus re-encoding, no guard (primary); seed-matched pairs [1, 2]
+  CER runs: CTT [4.032, 4.098, 4.149]  re-encoding [4.299, 4.218]
+  difference -0.194  95% CI [-0.396, +0.014]  90% CI [-0.362, -0.023]  p = 0.0624
+  Welch p = 0.074; Mann-Whitney p = 0.200
+  non-inferior (upper 95% bound < +0.2): True; equivalent (90% CI within +/-0.2): False
+== CTT minus re-encoding, with repetition guard (secondary); seed-matched pairs [1, 2]
+  CER runs: CTT [3.646, 3.645, 3.704]  re-encoding [3.721, 3.908]
+  difference -0.168  95% CI [-0.332, -0.011]  90% CI [-0.307, -0.034]  p = 0.0385
+  Welch p = 0.348; Mann-Whitney p = 0.200
+  non-inferior (upper 95% bound < +0.2): True; equivalent (90% CI within +/-0.2): False

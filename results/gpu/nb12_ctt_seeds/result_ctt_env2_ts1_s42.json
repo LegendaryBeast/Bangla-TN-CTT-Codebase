@@ -1,0 +1,272 @@
+{
+ "args": {
+  "variant": "ctt_env2_ts1",
+  "seed": 42,
+  "train_seed": 1,
+  "mode": "focus",
+  "model": "google/byt5-small",
+  "tiny": 0,
+  "epochs": 5,
+  "lr": 0.0003,
+  "batch_words": 48,
+  "max_chunks": 8,
+  "accum": 2,
+  "max_enc_tokens": 2048,
+  "max_dec_tokens": 2048,
+  "max_word_bytes": 64,
+  "src_budget": 160,
+  "max_word_tgt": 160,
+  "lam": 0.4,
+  "inject": 0,
+  "ext_lid": "none",
+  "eval_ext_lid": "",
+  "copy_mu": 0.5,
+  "copy_tau": 0.9,
+  "detach_heads": 1,
+  "align": 1,
+  "pretrain_aksharantar": 200000,
+  "pretrain_epochs": 1,
+  "val_comments": 400,
+  "gen_bs": 48,
+  "input": "/kaggle/input",
+  "out": "/kaggle/working/ctt",
+  "subsample": 0,
+  "data_csv": "BanglaMix.csv",
+  "save_val": 0,
+  "memory": "full",
+  "revision": "68377bdc18a2ffec8a0533fef03b1c513a4dd49d",
+  "save_weights": 0
+ },
+ "env": {
+  "python": "3.13.16",
+  "torch": "2.11.0+cu130",
+  "transformers": "5.20.2",
+  "cuda": "13.0",
+  "cudnn": 92700,
+  "gpu": "Tesla T4",
+  "model_revision": "68377bdc18a2ffec8a0533fef03b1c513a4dd49d",
+  "driver": "580.178.04\n580.178.04"
+ },
+ "history": [
+  {
+   "stage": "aksharantar",
+   "epoch": 0,
+   "train_loss": 0.29998168434165273,
+   "train_min": 48.927324918905896,
+   "oom_splits": 0,
+   "oom_skipped": 0,
+   "peak_GB": 7.279089450836182
+  },
+  {
+   "stage": "banglamix",
+   "epoch": 0,
+   "train_loss": 0.7617294340221971,
+   "train_min": 23.905214154720305,
+   "oom_splits": 0,
+   "oom_skipped": 0,
+   "peak_GB": 7.212116241455078,
+   "val_CER": 6.946144430844553,
+   "val_LID_MacroF1": 74.28403610544514
+  },
+  {
+   "stage": "banglamix",
+   "epoch": 1,
+   "train_loss": 0.28103856059315147,
+   "train_min": 23.8587685585022,
+   "oom_splits": 0,
+   "oom_skipped": 0,
+   "peak_GB": 7.251354217529297,
+   "val_CER": 4.7779332051057875,
+   "val_LID_MacroF1": 74.19232678485287
+  },
+  {
+   "stage": "banglamix",
+   "epoch": 2,
+   "train_loss": 0.22764555262140582,
+   "train_min": 23.849886286258698,
+   "oom_splits": 0,
+   "oom_skipped": 0,
+   "peak_GB": 7.229554176330566,
+   "val_CER": 4.218394824269978,
+   "val_LID_MacroF1": 74.60287119237925
+  },
+  {
+   "stage": "banglamix",
+   "epoch": 3,
+   "train_loss": 0.2058705515413315,
+   "train_min": 23.843754975001016,
+   "oom_splits": 0,
+   "oom_skipped": 0,
+   "peak_GB": 7.249760150909424,
+   "val_CER": 4.034796293058227,
+   "val_LID_MacroF1": 76.33782912781271
+  },
+  {
+   "stage": "banglamix",
+   "epoch": 4,
+   "train_loss": 0.18994318660788376,
+   "train_min": 23.838822491963704,
+   "oom_splits": 0,
+   "oom_skipped": 0,
+   "peak_GB": 7.224774360656738,
+   "val_CER": 3.6457422626333273,
+   "val_LID_MacroF1": 76.41013679395445
+  }
+ ],
+ "align": {
+  "aligned": 9399,
+  "recovered": 656,
+  "dropped": 3
+ },
+ "n_test_comments": 1261,
+ "n_test_chunks": 1607,
+ "n_test_words": 12184,
+ "norm": {
+  "free": {
+   "CER": 4.032234127808613,
+   "WER": 8.589459880337678,
+   "Exact": 61.53846153846154,
+   "TokAcc": 93.40508806262231,
+   "TokAcc_BAN": 98.33137023949745,
+   "TokAcc_ENG": 90.01919385796545,
+   "TokAcc_ROM_BAN": 86.35674583122788,
+   "TokAcc_OTHER": 91.98564593301435,
+   "TokAcc_UNK": 80.61674008810573,
+   "TokAcc_OOV": 79.53040337146298,
+   "TokAcc_direct": 93.3085855701504,
+   "word_count_match_share": 98.88888888888889
+  },
+  "free+guard": {
+   "CER": 3.6463744026594638,
+   "WER": 8.589459880337678,
+   "Exact": 61.53846153846154,
+   "TokAcc": 93.40508806262231,
+   "TokAcc_BAN": 98.33137023949745,
+   "TokAcc_ENG": 90.01919385796545,
+   "TokAcc_ROM_BAN": 86.35674583122788,
+   "TokAcc_OTHER": 91.98564593301435,
+   "TokAcc_UNK": 80.61674008810573,
+   "TokAcc_OOV": 79.53040337146298,
+   "TokAcc_direct": 93.3085855701504,
+   "word_count_match_share": 98.88888888888889
+  },
+  "copy": {
+   "CER": 4.015909293283072,
+   "WER": 8.499303335792149,
+   "Exact": 61.934972244250595,
+   "TokAcc": 93.48187237369295,
+   "TokAcc_BAN": 98.43229472859103,
+   "TokAcc_ENG": 90.01919385796545,
+   "TokAcc_ROM_BAN": 86.41414141414141,
+   "TokAcc_OTHER": 92.24343675417661,
+   "TokAcc_UNK": 80.26315789473685,
+   "TokAcc_OOV": 79.56860395446374,
+   "TokAcc_direct": 93.41328764515515,
+   "word_count_match_share": 98.97435897435898
+  },
+  "copy+guard": {
+   "CER": 3.634501795731798,
+   "WER": 8.499303335792149,
+   "Exact": 61.934972244250595,
+   "TokAcc": 93.48187237369295,
+   "TokAcc_BAN": 98.43229472859103,
+   "TokAcc_ENG": 90.01919385796545,
+   "TokAcc_ROM_BAN": 86.41414141414141,
+   "TokAcc_OTHER": 92.24343675417661,
+   "TokAcc_UNK": 80.26315789473685,
+   "TokAcc_OOV": 79.56860395446374,
+   "TokAcc_direct": 93.41328764515515,
+   "word_count_match_share": 98.97435897435898
+  },
+  "lid": {
+   "CER": 6.0832269745629395,
+   "WER": 10.78600114744693,
+   "Exact": 51.70499603489295,
+   "TokAcc": 91.0411622276029,
+   "TokAcc_BAN": 98.45189104448365,
+   "TokAcc_ENG": 89.21615201900237,
+   "TokAcc_ROM_BAN": 85.4483096521313,
+   "TokAcc_OTHER": 73.67178276269185,
+   "TokAcc_UNK": 56.76855895196506,
+   "TokAcc_OOV": 69.82707215265354,
+   "TokAcc_direct": 91.00513992004568,
+   "word_count_match_share": 99.31623931623932
+  },
+  "lid+guard": {
+   "CER": 5.7374372977946635,
+   "WER": 10.78600114744693,
+   "Exact": 51.70499603489295,
+   "TokAcc": 91.0411622276029,
+   "TokAcc_BAN": 98.45189104448365,
+   "TokAcc_ENG": 89.21615201900237,
+   "TokAcc_ROM_BAN": 85.4483096521313,
+   "TokAcc_OTHER": 73.67178276269185,
+   "TokAcc_UNK": 56.76855895196506,
+   "TokAcc_OOV": 69.82707215265354,
+   "TokAcc_direct": 91.00513992004568,
+   "word_count_match_share": 99.31623931623932
+  }
+ },
+ "efficiency": {
+  "free": {
+   "gen_seconds": 86.74762320518494,
+   "decoded_word_share": 99.86047275114905,
+   "words_per_sec": 140.45341589568483,
+   "enc_seconds": 18.998116731643677,
+   "encoder_bytes": 124364,
+   "total_words_per_sec": 115.21977156979177
+  },
+  "free+guard": {
+   "gen_seconds": 86.74762320518494,
+   "decoded_word_share": 99.86047275114905,
+   "words_per_sec": 140.45341589568483,
+   "enc_seconds": 18.998116731643677,
+   "encoder_bytes": 124364,
+   "total_words_per_sec": 115.21977156979177
+  },
+  "copy": {
+   "gen_seconds": 63.740517377853394,
+   "decoded_word_share": 52.76592252133946,
+   "words_per_sec": 191.15000161943027,
+   "enc_seconds": 18.84318470954895,
+   "encoder_bytes": 124364,
+   "total_words_per_sec": 147.53516362229777
+  },
+  "copy+guard": {
+   "gen_seconds": 63.740517377853394,
+   "decoded_word_share": 52.76592252133946,
+   "words_per_sec": 191.15000161943027,
+   "enc_seconds": 18.84318470954895,
+   "encoder_bytes": 124364,
+   "total_words_per_sec": 147.53516362229777
+  },
+  "lid": {
+   "gen_seconds": 52.98565745353699,
+   "decoded_word_share": 45.59258043335522,
+   "words_per_sec": 229.9490198962639,
+   "enc_seconds": 18.897045850753784,
+   "encoder_bytes": 124364,
+   "total_words_per_sec": 169.49835551430522
+  },
+  "lid+guard": {
+   "gen_seconds": 52.98565745353699,
+   "decoded_word_share": 45.59258043335522,
+   "words_per_sec": 229.9490198962639,
+   "enc_seconds": 18.897045850753784,
+   "encoder_bytes": 124364,
+   "total_words_per_sec": 169.49835551430522
+  }
+ },
+ "lid": {
+  "F1_BAN": 97.37513671162961,
+  "F1_ENG": 90.74443035681942,
+  "F1_ROM_BAN": 92.29122055674517,
+  "F1_OTHER": 85.53719008264463,
+  "F1_UNK": 13.73134328358209,
+  "MacroF1": 75.93586419828418,
+  "Acc": 92.61326329612606,
+  "Kappa": 0.8924451770392345,
+  "OOV_Acc": 77.29103726082577,
+  "IV_Acc": 95.59717591684644
+ }
+}

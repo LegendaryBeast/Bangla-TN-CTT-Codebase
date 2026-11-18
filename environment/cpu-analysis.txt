@@ -1,0 +1,9 @@
+# CPU analyses (experiments/, analysis/, annotation/): Python 3.13.9, macOS (Apple M2)
+numpy==2.3.5
+pandas==2.3.2
+scikit-learn==1.7.2
+scipy==1.16.3
+rapidfuzz==3.14.5
+openpyxl==3.1.5
+# version not recorded; the scripts use only sklearn_crfsuite.CRF(algorithm="lbfgs", ...)
+sklearn-crfsuite
